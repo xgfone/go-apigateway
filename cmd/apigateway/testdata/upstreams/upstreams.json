@@ -1,0 +1,30 @@
+[
+    {
+        "id": "upstream",
+        "policy": "wrr",
+        "timeout": 3, // 3s
+        "middlewareGroup": "",
+        "middlewares": {},
+        "discovery": {
+            "static": {
+                "servers": [
+                    {
+                        "host": "127.0.0.1",
+                        "port": 8001,
+                        "weight": 1
+                    },
+                    {
+                        "host": "127.0.0.1",
+                        "port": 8002,
+                        "weight": 2
+                    },
+                    {
+                        "host": "127.0.0.1",
+                        "port": 8003,
+                        "weight": 3
+                    }
+                ]
+            }
+        }
+    }
+]
