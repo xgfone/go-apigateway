@@ -37,6 +37,7 @@ func TestRedirect(t *testing.T) {
 	c := runtime.AcquireContext()
 	c.ClientResponse = runtime.NewResponseWriter(rec)
 	c.ClientRequest = req
+	c.SetModeForward()
 
 	/// http -> https
 	m.Handler(func(c *runtime.Context) { panic("redirect failed") })(c)

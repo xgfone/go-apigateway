@@ -90,7 +90,7 @@ type Config struct {
 // ForwardAuth returns a new middleware that forwards the authentication
 // to the external server.
 func ForwardAuth(name string, priority int, config Config) (runtime.Middleware, error) {
-	auth := &forwardauth{conf: config}
+	auth := &forwardauth{conf: config, src: "mw:" + name}
 	if auth.conf.URL == "" {
 		return nil, fmt.Errorf("ForwardAuth: missing the url")
 	}
@@ -134,6 +134,7 @@ type forwardauth struct {
 	next runtime.Handler
 	conf Config
 	req  *http.Request
+	src  string
 
 	authf func(context.Context, *runtime.Context) (*http.Response, error)
 
@@ -148,6 +149,10 @@ type forwardauth struct {
 }
 
 func (a *forwardauth) Handle(c *runtime.Context) {
+	if !c.NeedModeForward(a.src, a.next) {
+		return
+	}
+
 	ctx, cancel := context.WithTimeout(c.Context, a.conf.Timeout)
 	defer cancel()
 

@@ -31,6 +31,7 @@ func TestAllow(t *testing.T) {
 	var merr error
 	c := runtime.AcquireContext()
 	c.Context = context.Background()
+	c.SetModeForward()
 	c.SetResponseHandler(func(ctx *runtime.Context, r *http.Response, err error) {
 		merr = err
 	})

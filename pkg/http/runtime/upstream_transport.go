@@ -19,6 +19,8 @@ import (
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/xgfone/go-apigateway/pkg/http/dynamicconfig"
 )
 
 var (
@@ -67,4 +69,23 @@ func newUpstreamRequest(c *Context) *http.Request {
 		updateUpstreamRequest(c, req)
 	}
 	return req
+}
+
+func updateUpstreamRequest(c *Context, req *http.Request) {
+	// Set the url scheme.
+	if c.Upstream.UpConfig.Scheme == "https" {
+		req.URL.Scheme = "https"
+	} else {
+		req.URL.Scheme = "http"
+	}
+
+	// Set the Host header.
+	switch host := c.Upstream.UpConfig.Host; host {
+	case "", dynamicconfig.HostClient:
+		req.Host = c.ClientRequest.Host
+	case dynamicconfig.HostServer:
+		req.Host = "" // Clear the host and let the endpoint reset it.
+	default:
+		req.Host = host
+	}
 }

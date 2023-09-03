@@ -15,13 +15,10 @@
 package runtime
 
 import (
-	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/xgfone/go-apigateway/pkg/http/dynamicconfig"
-	"github.com/xgfone/go-defaults"
 )
 
 // Route represents a runtime route.
@@ -32,65 +29,6 @@ type Route struct {
 	matcher   matcher
 	mwgroup   string
 	mwhandler Handler
-}
-
-// Match reports whether the route matches the http request or not.
-func (r *Route) Match(c *Context) bool {
-	return r.matcher.Match(c)
-}
-
-// Handle handles and forwards the http request by the route.
-func (r *Route) Handle(c *Context) {
-	if r.Route.Timeout > 0 {
-		var cancel context.CancelFunc
-		c.Context, cancel = context.WithTimeout(c.Context, r.Route.Timeout*time.Second)
-		defer cancel()
-	}
-
-	defer wrapPanic(c)
-
-	switch {
-	case r.mwhandler != nil:
-		r.mwhandler(c)
-
-	case r.mwgroup != "":
-		DefaultMiddlewareGroupManager.Handle(c, r.mwgroup, UpstreamForward)
-
-	default:
-		UpstreamForward(c)
-	}
-}
-
-func wrapPanic(c *Context) {
-	r := recover()
-	switch e := r.(type) {
-	case nil:
-		return
-	case error:
-		c.SendResponse(nil, ErrInternalServerError.WithError(e))
-	default:
-		c.SendResponse(nil, ErrInternalServerError.WithError(fmt.Errorf("%v", e)))
-	}
-	defaults.HandlePanic(r)
-}
-
-// ------------------------------------------------------------------------- //
-
-func handleRouteMiddlewareGroup(c *Context) {
-	switch {
-	case c.Route.mwgroup != "":
-		DefaultMiddlewareGroupManager.Handle(c, c.Route.mwgroup, UpstreamForward)
-
-	default:
-		UpstreamForward(c)
-	}
-}
-
-func buildRouteMiddlewares(r dynamicconfig.Route) (Handler, error) {
-	if len(r.Middlewares) == 0 {
-		return nil, nil
-	}
-	return buildMiddlewaresHandler(handleRouteMiddlewareGroup, r.Middlewares)
 }
 
 // NewRoute builds the runtime route by the config.
@@ -121,4 +59,33 @@ func NewRoute(r dynamicconfig.Route) (route Route, err error) {
 		mwhandler: handler,
 		response:  StdResponse,
 	}, nil
+}
+
+func buildRouteMiddlewares(r dynamicconfig.Route) (Handler, error) {
+	if len(r.Middlewares) == 0 {
+		return nil, nil
+	}
+	return buildMiddlewaresHandler(handleRouteMiddlewareGroup, r.Middlewares)
+}
+
+func handleRouteMiddlewareGroup(c *Context) {
+	next := getRouteNextHandler(c)
+	switch {
+	case c.Route.mwgroup != "":
+		DefaultMiddlewareGroupManager.Handle(c, c.Route.mwgroup, next)
+
+	default:
+		next(c)
+	}
+}
+
+func getRouteNextHandler(c *Context) Handler {
+	switch c.Mode {
+	case ModeCall:
+		return UpstreamCall
+	case ModeForward:
+		return UpstreamForward
+	default:
+		panic(fmt.Errorf("unknown running mode '%d'", c.Mode))
+	}
 }

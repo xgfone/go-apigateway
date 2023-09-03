@@ -31,8 +31,6 @@ import (
 )
 
 func TestForwardAuth(t *testing.T) {
-	// slogx.DisableSLog()
-
 	var server *http.Server
 	defer func() {
 		if server != nil {
@@ -98,6 +96,7 @@ func TestForwardAuth(t *testing.T) {
 	c := runtime.AcquireContext()
 	defer runtime.ReleaseContext(c)
 
+	c.SetModeForward()
 	c.Route.Route.Upstream = "forwardauth"
 	c.ClientRequest = httptest.NewRequest(http.MethodGet, "http://127.0.0.1", nil)
 	c.ClientRequest.Header.Set("X-Auth-Type", "header")

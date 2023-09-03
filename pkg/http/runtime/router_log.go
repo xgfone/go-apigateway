@@ -24,47 +24,49 @@ import (
 func (r *Router) DisableLog(disable bool) { r.notlog.Store(disable) }
 
 func (r *Router) log(c *Context, start time.Time, matched bool) {
-	if !r.notlog.Load() && c.Enabled(slog.LevelInfo) {
-		req := c.ClientRequest
-		cost := time.Since(start)
-		logattrs := getattrs()
-		logattrs.Append(
-			slog.String("reqid", c.RequestID()),
-			slog.String("raddr", req.RemoteAddr),
-			slog.String("method", req.Method),
-			slog.String("path", req.URL.Path),
-			slog.String("query", req.URL.RawQuery),
-		)
-
-		if matched {
-			logattrs.Append(slog.String("route", c.Route.Route.Id))
-			if c.Upstream != nil {
-				logattrs.Append(slog.String("upstream", c.Upstream.UpConfig.Id))
-				if c.Endpoint != nil {
-					logattrs.Append(slog.String("endpoint", c.Endpoint.ID()))
-				}
-			}
-		}
-
-		logattrs.Append(
-			slog.String("cost", cost.String()),
-			slog.Int("code", c.ClientResponse.StatusCode()),
-			slog.Int("resplen", c.ClientResponse.Written()),
-		)
-
-		switch e := c.Error.(type) {
-		case nil:
-		case Error:
-			if e.Err != nil {
-				slog.Any("err", e.Err)
-			}
-		default:
-			logattrs.Append(slog.Any("err", c.Error))
-		}
-
-		slog.LogAttrs(c.Context, slog.LevelInfo, "log http request", logattrs.Attrs...)
-		putattrs(logattrs)
+	if r.notlog.Load() || !c.Enabled(slog.LevelInfo) {
+		return
 	}
+
+	req := c.ClientRequest
+	cost := time.Since(start)
+	logattrs := getattrs()
+	logattrs.Append(
+		slog.String("reqid", c.RequestID()),
+		slog.String("raddr", req.RemoteAddr),
+		slog.String("method", req.Method),
+		slog.String("path", req.URL.Path),
+		slog.String("query", req.URL.RawQuery),
+	)
+
+	if matched {
+		logattrs.Append(slog.String("route", c.Route.Route.Id))
+		if c.Upstream != nil {
+			logattrs.Append(slog.String("upstream", c.Upstream.UpConfig.Id))
+			if c.Endpoint != nil {
+				logattrs.Append(slog.String("endpoint", c.Endpoint.ID()))
+			}
+		}
+	}
+
+	logattrs.Append(
+		slog.String("cost", cost.String()),
+		slog.Int("code", c.ClientResponse.StatusCode()),
+		slog.Int("resplen", c.ClientResponse.Written()),
+	)
+
+	switch e := c.Error.(type) {
+	case nil:
+	case Error:
+		if e.Err != nil {
+			slog.Any("err", e.Err)
+		}
+	default:
+		logattrs.Append(slog.Any("err", c.Error))
+	}
+
+	slog.LogAttrs(c.Context, slog.LevelInfo, "log http request", logattrs.Attrs...)
+	putattrs(logattrs)
 }
 
 type logattr struct{ Attrs []slog.Attr }

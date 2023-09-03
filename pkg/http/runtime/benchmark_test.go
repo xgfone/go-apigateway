@@ -31,7 +31,6 @@ import (
 	"github.com/xgfone/go-apigateway/pkg/internal/httpx"
 	"github.com/xgfone/go-apigateway/pkg/internal/slogx"
 	"github.com/xgfone/go-loadbalancer"
-	"github.com/xgfone/go-loadbalancer/upstream"
 )
 
 func BenchmarkRouterNoop(b *testing.B) {
@@ -70,7 +69,7 @@ func BenchmarkRouterNoop(b *testing.B) {
 		panic(err)
 	}
 
-	upstream.DefaultManager.Reset(nil)
+	runtime.ClearUpstreams()
 	runtime.AddUpstream(up)
 
 	router := runtime.NewRouter()
@@ -95,7 +94,7 @@ func BenchmarkRouterFull(b *testing.B) {
 		panic(err)
 	}
 
-	b192169, err := block.Block("block", 10, "192.168.0.0/24")
+	b192169, err := block.Block("block", 10, "192.169.0.0/24")
 	if err != nil {
 		panic(err)
 	}
@@ -156,7 +155,7 @@ func BenchmarkRouterFull(b *testing.B) {
 		panic(err)
 	}
 
-	upstream.DefaultManager.Reset(nil)
+	runtime.ClearUpstreams()
 	runtime.AddUpstream(up)
 
 	router := runtime.NewRouter()

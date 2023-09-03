@@ -46,14 +46,17 @@ func Block(name string, priority int, cidrs ...string) (runtime.Middleware, erro
 		return nil, err
 	}
 
-	return runtime.NewMiddleware(name, priority, cidrs, func(h runtime.Handler) runtime.Handler {
+	source := "mw:" + name
+	return runtime.NewMiddleware(name, priority, cidrs, func(next runtime.Handler) runtime.Handler {
 		return func(c *runtime.Context) {
-			ip := c.ClientIP()
-			if !ipchecker.ContainsAddr(ip) {
-				h(c)
-			} else {
-				err := fmt.Errorf("ip '%s' is not allowed", ip.String())
-				c.SendResponse(nil, runtime.ErrForbidden.WithError(err))
+			if c.NeedModeForward(source, next) {
+				ip := c.ClientIP()
+				if !ipchecker.ContainsAddr(ip) {
+					next(c)
+				} else {
+					err := fmt.Errorf("ip '%s' is not allowed", ip.String())
+					c.SendResponse(nil, runtime.ErrForbidden.WithError(err))
+				}
 			}
 		}
 	}), nil

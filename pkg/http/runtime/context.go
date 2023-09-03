@@ -71,6 +71,7 @@ type ResponseWriter interface {
 
 // Context represents a request context.
 type Context struct {
+	Mode        // Set by the router after matching the route or caller when calling the route.
 	Route Route // Set by the router after matching the route.
 
 	Context        context.Context // Set by the router

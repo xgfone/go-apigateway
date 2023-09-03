@@ -64,13 +64,14 @@ func Redirect(name string, priority int, config *Config) (runtime.Middleware, er
 	var redirect func(*runtime.Context) bool
 	switch {
 	case config.HttpToHttps:
-		redirect = httpsredirect{Code: conf.Code}.Handle
+		redirect = httpsredirect{src: "mw:" + name, code: conf.Code}.Handle
 
 	case config.Location != "":
 		redirect = locredirect{
-			Code:     conf.Code,
-			Location: config.Location,
-			AddQuery: config.AppendQuery,
+			src:      "mw:" + name,
+			code:     conf.Code,
+			location: config.Location,
+			addquery: config.AppendQuery,
 		}.Handle
 
 	default:
@@ -86,29 +87,43 @@ func Redirect(name string, priority int, config *Config) (runtime.Middleware, er
 	}), nil
 }
 
-type httpsredirect struct{ Code int }
+type httpsredirect struct {
+	src string
+
+	code int
+}
 
 func (r httpsredirect) Handle(c *runtime.Context) (ok bool) {
+	if !c.NeedModeForward(r.src, nil) {
+		return
+	}
+
 	if ok = c.ClientRequest.TLS == nil; ok {
 		host := strings.TrimPrefix(c.ClientRequest.Host, "http://")
 		loc := strings.Join([]string{"https://", host, c.ClientRequest.RequestURI}, "")
-		redirect(c.ClientResponse, r.Code, loc)
+		redirect(c.ClientResponse, r.code, loc)
 	}
 	return
 }
 
 type locredirect struct {
-	Code     int
-	Location string
-	AddQuery bool
+	src string
+
+	code     int
+	location string
+	addquery bool
 }
 
 func (r locredirect) Handle(c *runtime.Context) (ok bool) {
-	loc := r.Location
-	if r.AddQuery {
+	if !c.NeedModeForward(r.src, nil) {
+		return
+	}
+
+	loc := r.location
+	if r.addquery {
 		loc = strings.Join([]string{loc, c.ClientRequest.URL.RawQuery}, "?")
 	}
-	redirect(c.ClientResponse, r.Code, loc)
+	redirect(c.ClientResponse, r.code, loc)
 	return true
 }
 
