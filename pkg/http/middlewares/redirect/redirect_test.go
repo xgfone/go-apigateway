@@ -34,10 +34,9 @@ func TestRedirect(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "http://127.0.0.1/path?key=value", nil)
 	req.RequestURI = strings.TrimPrefix(req.RequestURI, "http://127.0.0.1")
 
-	c := runtime.AcquireContext()
+	c := runtime.AcquireContext(req.Context())
 	c.ClientResponse = runtime.NewResponseWriter(rec)
 	c.ClientRequest = req
-	c.SetModeForward()
 
 	/// http -> https
 	m.Handler(func(c *runtime.Context) { panic("redirect failed") })(c)

@@ -15,6 +15,7 @@
 package processor
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 	"testing"
@@ -34,7 +35,7 @@ func TestProcessor(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	c := runtime.AcquireContext()
+	c := runtime.AcquireContext(context.Background())
 	c.ClientRequest = &http.Request{URL: new(url.URL)}
 	mw.Handler(func(c *runtime.Context) {})(c)
 

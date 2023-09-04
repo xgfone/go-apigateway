@@ -16,13 +16,20 @@ package runtime
 
 import (
 	"context"
+	"fmt"
 	"time"
+
+	"github.com/xgfone/go-defaults"
 )
 
-// Call calls the request by the route as the client,
-// which will set the running mode to ModeCall.
-func (r *Route) Call(c *Context) {
-	c.setmode(ModeCall)
+// Match reports whether the route matches the http request or not.
+func (r *Route) Match(c *Context) bool {
+	return r.matcher.Match(c)
+}
+
+// Handle handles and forwards the http request by the route.
+func (r *Route) Handle(c *Context) {
+	defer r.recover(c)
 
 	if r.Route.Timeout > 0 {
 		var cancel context.CancelFunc
@@ -35,9 +42,20 @@ func (r *Route) Call(c *Context) {
 		r.mwhandler(c)
 
 	case r.mwgroup != "":
-		DefaultMiddlewareGroupManager.Handle(c, r.mwgroup, UpstreamCall)
+		DefaultMiddlewareGroupManager.Handle(c, r.mwgroup, UpstreamForward)
 
 	default:
-		UpstreamCall(c)
+		UpstreamForward(c)
+	}
+}
+
+func (r *Route) recover(c *Context) {
+	if r := recover(); r != nil {
+		defaults.HandlePanicContext(c.Context, r)
+		if e, ok := r.(error); ok {
+			c.Abort(fmt.Errorf("panic: %w", e))
+		} else {
+			c.Abort(fmt.Errorf("panic: %v", r))
+		}
 	}
 }

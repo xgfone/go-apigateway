@@ -69,23 +69,11 @@ func buildRouteMiddlewares(r dynamicconfig.Route) (Handler, error) {
 }
 
 func handleRouteMiddlewareGroup(c *Context) {
-	next := getRouteNextHandler(c)
 	switch {
 	case c.Route.mwgroup != "":
-		DefaultMiddlewareGroupManager.Handle(c, c.Route.mwgroup, next)
+		DefaultMiddlewareGroupManager.Handle(c, c.Route.mwgroup, UpstreamForward)
 
 	default:
-		next(c)
-	}
-}
-
-func getRouteNextHandler(c *Context) Handler {
-	switch c.Mode {
-	case ModeCall:
-		return UpstreamCall
-	case ModeForward:
-		return UpstreamForward
-	default:
-		panic(fmt.Errorf("unknown running mode '%d'", c.Mode))
+		UpstreamForward(c)
 	}
 }

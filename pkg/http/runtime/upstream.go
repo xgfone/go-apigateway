@@ -44,32 +44,20 @@ func (u *Upstream) handle(c *Context) {
 		u.mwhandler(c)
 
 	case u.mwgroup != "":
-		DefaultMiddlewareGroupManager.Handle(c, u.mwgroup, getUpstreamNextHandler(c))
+		DefaultMiddlewareGroupManager.Handle(c, u.mwgroup, upstreamforward)
 
 	default:
-		getUpstreamNextHandler(c)(c)
+		upstreamforward(c)
 	}
 }
 
 func handleUpstreamMiddlewareGroup(c *Context) {
-	next := getUpstreamNextHandler(c)
 	switch {
 	case c.Upstream.mwgroup != "":
-		DefaultMiddlewareGroupManager.Handle(c, c.Upstream.mwgroup, next)
+		DefaultMiddlewareGroupManager.Handle(c, c.Upstream.mwgroup, upstreamforward)
 
 	default:
-		next(c)
-	}
-}
-
-func getUpstreamNextHandler(c *Context) Handler {
-	switch c.Mode {
-	case ModeCall:
-		return upstreamcall
-	case ModeForward:
-		return upstreamforward
-	default:
-		panic(fmt.Errorf("unknown running mode '%d'", c.Mode))
+		upstreamforward(c)
 	}
 }
 
@@ -223,4 +211,63 @@ func GetUpstreams() []*Upstream {
 // ClearUpstreams clears all the added upstreams.
 func ClearUpstreams() {
 	upstream.DefaultManager.Reset(nil)
+}
+
+// ------------------------------------------------------------------------- //
+
+// Forward is the same as UpstreamForward, but using the given upstream.
+func (u *Upstream) Forward(c *Context) {
+	if c.IsAborted() {
+		return
+	}
+
+	switch {
+	case c.Upstream == nil:
+		c.Upstream = u
+	case u != c.Upstream:
+		panic("runtime.Upstream.Forward: the upstream is not the same with Context")
+	}
+
+	_forward(c)
+}
+
+func _forward(c *Context) {
+	// the request has been created before being forwarded.
+	if req := c.upRequest(); req != nil {
+		updateUpstreamRequest(c, req)
+	}
+
+	c.Upstream.handle(c)
+}
+
+// UpstreamForward forwards the request to one of the upstream servers
+// by the upstream, which stores the result to the fileds UpstreamResponse
+// and Error of Context.
+func UpstreamForward(c *Context) {
+	if c.IsAborted() {
+		return
+	}
+
+	if c.Upstream == nil {
+		c.Upstream = GetUpstream(c.Route.Route.Upstream)
+		if c.Upstream == nil {
+			c.Abort(fmt.Errorf("no upstream '%s'", c.Route.Route.Upstream))
+			return
+		}
+	}
+
+	_forward(c)
+}
+
+func upstreamforward(c *Context) {
+	c.callbackOnForward()
+	if c.IsAborted() {
+		return
+	}
+
+	var resp interface{}
+	resp, c.Error = c.Upstream.upstream.Forwader().Serve(c.ClientRequest.Context(), c)
+	if resp != nil {
+		c.UpstreamResponse = resp.(*http.Response)
+	}
 }

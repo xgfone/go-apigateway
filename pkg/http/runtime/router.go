@@ -15,7 +15,6 @@
 package runtime
 
 import (
-	"fmt"
 	"maps"
 	"net/http"
 	"sort"
@@ -24,7 +23,6 @@ import (
 	"time"
 
 	"github.com/xgfone/go-atomicvalue"
-	"github.com/xgfone/go-defaults"
 )
 
 // DefaultRouter is the default global http router.
@@ -144,7 +142,7 @@ var _ http.Handler = new(Router)
 
 // ServeHTTP implements the interface http.Handler.
 func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	c := AcquireContext()
+	c := AcquireContext(req.Context())
 	defer ReleaseContext(c)
 
 	if w, ok := rw.(ResponseWriter); ok {
@@ -154,20 +152,10 @@ func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	c.ClientRequest = req
-	c.Context = req.Context()
 	r.serveHTTP(c, req)
 }
 
-func (r *Router) recover(c *Context) {
-	if r := recover(); r != nil {
-		defaults.HandlePanicContext(c.Context, r)
-		c.SendResponse(nil, ErrBadGateway)
-		c.Error = fmt.Errorf("panic: %v", r)
-	}
-}
-
 func (r *Router) serveHTTP(c *Context, req *http.Request) {
-	defer r.recover(c)
 	start := time.Now()
 
 	var matched bool
@@ -184,8 +172,13 @@ func (r *Router) serveHTTP(c *Context, req *http.Request) {
 			break
 		}
 	}
+
 	if !matched {
-		c.SendResponse(nil, ErrNotFound)
+		c.Error = ErrNotFound
+	}
+
+	if !c.ClientResponse.WroteHeader() {
+		c.SendResponse()
 	}
 
 	r.log(c, start, matched)

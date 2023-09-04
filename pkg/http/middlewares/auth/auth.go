@@ -44,20 +44,20 @@ func Authorization(name string, priority int, _type string, handle func(value st
 		return func(c *runtime.Context) {
 			auth := strings.TrimSpace(c.ClientRequest.Header.Get("Authorization"))
 			if auth == "" {
-				c.SendResponse(nil, runtime.ErrUnauthorized.WithError(errMissingAuthorization))
+				c.Abort(runtime.ErrUnauthorized.WithError(errMissingAuthorization))
 				return
 			}
 
 			index := strings.IndexByte(auth, ' ')
 			if index < 0 || auth[:index] != _type {
-				c.SendResponse(nil, runtime.ErrUnauthorized.WithError(errInvalidAuthorization))
+				c.Abort(runtime.ErrUnauthorized.WithError(errInvalidAuthorization))
 				return
 			}
 
 			header := getheader()
 			defer putheader(header)
 			if err := handle(strings.TrimSpace(auth[index+1:]), header); err != nil {
-				c.SendResponse(nil, runtime.ErrUnauthorized.WithError(err))
+				c.Abort(runtime.ErrUnauthorized.WithError(err))
 			} else {
 				c.OnForward(func() { maps.Copy(c.UpstreamRequest().Header, header) })
 				next(c)

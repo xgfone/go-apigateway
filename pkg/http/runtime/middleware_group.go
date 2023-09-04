@@ -178,7 +178,6 @@ func (m *MiddlewareGroupManager) Handle(c *Context, group string, next Handler) 
 		c.next = next
 		g.Handle(c)
 	} else {
-		err := fmt.Errorf("not found the middleware group '%s'", group)
-		c.SendResponse(nil, ErrInternalServerError.WithError(err))
+		c.Abort(fmt.Errorf("not found the middleware group '%s'", group))
 	}
 }

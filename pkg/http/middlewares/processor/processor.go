@@ -72,7 +72,7 @@ func Processor(name string, priority int, p processor.Processor) (runtime.Middle
 		return func(c *runtime.Context) {
 			pc := processor.NewContext(c.ClientResponse, c.ClientRequest, c.UpstreamRequest()).WithContext(c)
 			if err := p.Process(c.Context, pc); err != nil {
-				c.SendResponse(nil, runtime.ErrInternalServerError.WithError(err))
+				c.Abort(runtime.ErrInternalServerError.WithError(err))
 			} else {
 				h(c)
 			}

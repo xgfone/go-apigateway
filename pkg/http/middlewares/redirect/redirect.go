@@ -94,10 +94,6 @@ type httpsredirect struct {
 }
 
 func (r httpsredirect) Handle(c *runtime.Context) (ok bool) {
-	if !c.NeedModeForward(r.src, nil) {
-		return
-	}
-
 	if ok = c.ClientRequest.TLS == nil; ok {
 		host := strings.TrimPrefix(c.ClientRequest.Host, "http://")
 		loc := strings.Join([]string{"https://", host, c.ClientRequest.RequestURI}, "")
@@ -115,10 +111,6 @@ type locredirect struct {
 }
 
 func (r locredirect) Handle(c *runtime.Context) (ok bool) {
-	if !c.NeedModeForward(r.src, nil) {
-		return
-	}
-
 	loc := r.location
 	if r.addquery {
 		loc = strings.Join([]string{loc, c.ClientRequest.URL.RawQuery}, "?")

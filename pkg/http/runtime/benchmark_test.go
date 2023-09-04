@@ -105,12 +105,8 @@ func BenchmarkRouterFull(b *testing.B) {
 	runtime.DefaultMiddlewareGroupManager.AddGroup("umg", umgroup)
 
 	route, err := runtime.NewRoute(dynamicconfig.Route{
-		Id: "r1",
-
-		Matcher: dynamicconfig.Matcher{
-			Path: "/",
-		},
-
+		Id:              "r1",
+		Matcher:         dynamicconfig.Matcher{Path: "/"},
 		MiddlewareGroup: "rmg",
 		Middlewares: dynamicconfig.Middlewares{
 			"allow": map[string]any{"cidrs": []string{"127.0.0.0/8"}},
@@ -175,12 +171,11 @@ func BenchmarkRouterFull(b *testing.B) {
 }
 
 func servehttp(r *runtime.Router, req *http.Request) {
-	c := runtime.AcquireContext()
+	c := runtime.AcquireContext(req.Context())
 	defer runtime.ReleaseContext(c)
 	rec := httptest.NewRecorder()
 
 	c.ClientRequest = req
-	c.Context = req.Context()
 	c.ClientResponse = httpx.NewResponseWriter(rec)
 	r.HandleHTTP(c)
 }

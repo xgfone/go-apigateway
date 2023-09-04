@@ -18,7 +18,6 @@ package forward
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -38,8 +37,6 @@ func init() {
 		var config Config
 		if err := binder.BindStructToMap(&config, "json", conf); err != nil {
 			return nil, err
-		} else if config.Timeout < time.Second {
-			config.Timeout *= time.Second
 		}
 		return ForwardAuth(name, auth.Priority, config)
 	})
@@ -48,11 +45,13 @@ func init() {
 // Config is the configuration information to forward the authorization request
 // to the authorization server.
 type Config struct {
-	// Required, either-or, and prefer route than url.
-	Route string `json:"route" yaml:"route"`
-	URL   string `json:"url" yaml:"url"`
+	// Required
+	URL string `json:"url,omitempty" yaml:"url,omitempty"`
 
-	// Optional, Ignored if route is given
+	// Optional, if exists, use the upstream as the transport.
+	Upstream string `json:"upstream,omitempty" yaml:"upstream,omitempty"`
+
+	// Optional
 	Method  string   `json:"method,omitempty" yaml:"method,omitempty"`   // Default: GET, one of GET or POST
 	Headers []string `json:"headers,omitempty" yaml:"headers,omitempty"` // Default: nil
 	/// Extra Request Headers:
@@ -90,53 +89,58 @@ type Config struct {
 // ForwardAuth returns a new middleware that forwards the authentication
 // to the external server.
 func ForwardAuth(name string, priority int, config Config) (runtime.Middleware, error) {
-	auth := &forwardauth{conf: config, src: "mw:" + name}
-	if auth.conf.URL == "" {
+	if config.URL == "" {
 		return nil, fmt.Errorf("ForwardAuth: missing the url")
 	}
 
-	switch auth.conf.Method = strings.ToUpper(auth.conf.Method); auth.conf.Method {
+	switch config.Method = strings.ToUpper(config.Method); config.Method {
 	case http.MethodGet, http.MethodPost:
 	case "":
-		auth.conf.Method = http.MethodGet
+		config.Method = http.MethodGet
 	default:
-		return nil, fmt.Errorf("ForwardAuth: unsupported the method '%s'", auth.conf.Method)
+		return nil, fmt.Errorf("ForwardAuth: unsupported the method '%s'", config.Method)
 	}
 
-	if auth.conf.Route == "" {
-		var err error
-		auth.req, err = http.NewRequest(auth.conf.Method, auth.conf.URL, nil)
-		if err != nil {
-			return nil, err
-		}
-
-		auth.authf = auth.authByReq
-	} else {
-		auth.authf = auth.authByRoute
+	req, err := http.NewRequest(config.Method, config.URL, nil)
+	if err != nil {
+		return nil, err
 	}
 
-	if auth.conf.Timeout <= 0 {
-		auth.conf.Timeout = time.Second * 3
+	if config.Timeout <= 0 {
+		config.Timeout = time.Second * 3
 	}
 
-	auth.exactHeaders, auth.prefixHeaders = formatHeaders(auth.conf.Headers)
-	auth.exactClientHeaders, auth.prefixClientHeaders = formatHeaders(auth.conf.ClientHeaders)
-	auth.exactUpstreamHeaders, auth.prefixUpstreamHeaders = formatHeaders(auth.conf.UpstreamHeaders)
+	auth := forwardauth{
+		name: name,
+		upid: config.Upstream,
+		req:  req,
 
-	return runtime.NewMiddleware(name, priority, auth.conf, func(next runtime.Handler) runtime.Handler {
-		a := auth
-		a.next = next
-		return a.Handle
+		url:      config.URL,
+		degraded: config.Degraded,
+		timeout:  config.Timeout,
+		client:   config.Client,
+	}
+
+	auth.exactHeaders, auth.prefixHeaders = formatHeaders(config.Headers)
+	auth.exactClientHeaders, auth.prefixClientHeaders = formatHeaders(config.ClientHeaders)
+	auth.exactUpstreamHeaders, auth.prefixUpstreamHeaders = formatHeaders(config.UpstreamHeaders)
+
+	return runtime.NewMiddleware(name, priority, config, func(next runtime.Handler) runtime.Handler {
+		auth := auth.with(next)
+		return auth.Handle
 	}), nil
 }
 
 type forwardauth struct {
 	next runtime.Handler
-	conf Config
-	req  *http.Request
-	src  string
 
-	authf func(context.Context, *runtime.Context) (*http.Response, error)
+	url      string
+	name     string
+	upid     string
+	degraded bool
+	timeout  time.Duration
+	client   *http.Client
+	req      *http.Request
 
 	exactHeaders  map[string]struct{}
 	prefixHeaders []string
@@ -148,26 +152,73 @@ type forwardauth struct {
 	prefixUpstreamHeaders []string
 }
 
-func (a *forwardauth) Handle(c *runtime.Context) {
-	if !c.NeedModeForward(a.src, a.next) {
-		return
-	}
+func (a forwardauth) with(next runtime.Handler) forwardauth {
+	a.next = next
+	return a
+}
 
-	ctx, cancel := context.WithTimeout(c.Context, a.conf.Timeout)
+func (a *forwardauth) Handle(c *runtime.Context) {
+	ctx, cancel := context.WithTimeout(c.Context, a.timeout)
 	defer cancel()
 
-	resp, err := a.authf(ctx, c)
-	if resp != nil { // resp is not eqial to nil when failing with 3xx.
+	req := a.req.Clone(ctx)
+
+	// 1. Copy the headers from the original request headers.
+	copyHeaders(req.Header, c.ClientRequest.Header, a.exactHeaders, a.prefixHeaders)
+
+	// 2. Add the extra headers.
+	if c.ClientRequest.TLS == nil {
+		req.Header.Set("X-Forwarded-Proto", "http")
+	} else {
+		req.Header.Set("X-Forwarded-Proto", "https")
+	}
+	req.Header.Set("X-Forwarded-Method", c.ClientRequest.Method)
+	req.Header.Set("X-Forwarded-Host", c.ClientRequest.Host)
+	req.Header.Set("X-Forwarded-Uri", c.ClientRequest.RequestURI)
+	req.Header.Set("X-Forwarded-For", c.ClientRequest.RemoteAddr)
+
+	// 3. Send the request to authorization server
+	var err error
+	var resp *http.Response
+	switch {
+	case a.upid != "":
+		up := runtime.GetUpstream(a.upid)
+		if up == nil {
+			err = fmt.Errorf("not found the upstream '%s'", a.upid)
+			break
+		}
+
+		newc := runtime.AcquireContext(c.Context)
+		newc.ClientRequest = req
+		up.Forward(newc)
+		resp, err = newc.UpstreamResponse, newc.Error
+		runtime.ReleaseContext(newc)
+
+	case a.client != nil:
+		resp, err = a.client.Do(req)
+
+	case runtime.DefaultHttpClient != nil:
+		resp, err = runtime.DefaultHttpClient.Do(req)
+
+	default:
+		resp, err = http.DefaultClient.Do(req)
+	}
+
+	if resp != nil {
 		defer resp.Body.Close()
 	}
 
 	if err != nil {
-		if a.conf.Degraded {
+		slog.Error("fail to forward auth", "reqid", c.RequestID(),
+			"method", req.Method, "url", a.url, "upstream", a.upid, "err", err)
+
+		if a.degraded {
 			a.next(c)
 		} else {
-			c.SendResponse(nil, runtime.ErrServiceUnavailable)
-			c.Error = fmt.Errorf("forwardauth failed: url=%s, err=%w", a.conf.URL, err)
+			err := fmt.Errorf("fail to forward auth: url=%s, err=%w", a.url, err)
+			c.Abort(err)
 		}
+
 		return
 	}
 
@@ -185,77 +236,25 @@ func (a *forwardauth) Handle(c *runtime.Context) {
 
 	buf := getbuffer()
 	_, _ = io.Copy(buf, resp.Body)
-	slog.Error("forwardauth failed", "reqid", c.RequestID(),
-		"method", a.conf.Method, "url", a.conf.URL, //"reqheaders", req.Header,
-		"code", resp.StatusCode, "respheader", resp.Header,
-		"err", buf.String())
+	slog.Error("fail to forward auth",
+		"reqid", c.RequestID(), "route", c.Route.Route.Id,
+		"authmethod", req.Method, "authurl", a.url, "authreqheaders", req.Header,
+		"authrespcode", resp.StatusCode, "authrespheader", resp.Header,
+		"authrespbody", buf.String())
 	putbuffer(buf)
 
-	if a.conf.Degraded {
+	if a.degraded {
 		a.next(c)
 	} else {
 		copyHeaders(c.ClientResponse.Header(), resp.Header, a.exactClientHeaders, a.prefixClientHeaders)
-		c.SendResponse(nil, runtime.ErrUnauthorized.WithError(errAuthFailure))
-		c.Error = fmt.Errorf("forwardauth failed: method=%s, url=%s, code=%d",
-			a.conf.Method, a.conf.URL, resp.StatusCode)
+		c.Abort(runtime.ErrUnauthorized)
 	}
-}
-
-func (a *forwardauth) authByReq(ctx context.Context, c *runtime.Context) (resp *http.Response, err error) {
-	req := a.req.Clone(ctx)
-	a.updateAuthReq(c, req)
-
-	switch {
-	case a.conf.Client != nil:
-		resp, err = a.conf.Client.Do(req)
-
-	case runtime.DefaultHttpClient != nil:
-		resp, err = runtime.DefaultHttpClient.Do(req)
-
-	default:
-		resp, err = http.DefaultClient.Do(req)
-	}
-
-	if err != nil {
-		slog.Error("forwardauth failed", "reqid", c.RequestID(),
-			"method", a.conf.Method, "url", a.conf.URL, "err", err)
-	}
-
-	return
-}
-
-func (a *forwardauth) authByRoute(ctx context.Context, c *runtime.Context) (*http.Response, error) {
-	// route, ok := runtime.DefaultRouter.GetRoute(a.conf.Route)
-	// if !ok {
-	// 	return nil, fmt.Errorf("not found the route '%s'", a.conf.Route)
-	// }
-
-	// TODO:
-	return nil, nil
-}
-
-func (a *forwardauth) updateAuthReq(c *runtime.Context, req *http.Request) {
-	// 1. Copy the headers from the original request headers.
-	copyHeaders(req.Header, c.ClientRequest.Header, a.exactHeaders, a.prefixHeaders)
-
-	// 2. Add the extra headers.
-	if c.ClientRequest.TLS == nil {
-		req.Header.Set("X-Forwarded-Proto", "http")
-	} else {
-		req.Header.Set("X-Forwarded-Proto", "https")
-	}
-	req.Header.Set("X-Forwarded-Method", c.ClientRequest.Method)
-	req.Header.Set("X-Forwarded-Host", c.ClientRequest.Host)
-	req.Header.Set("X-Forwarded-Uri", c.ClientRequest.RequestURI)
-	req.Header.Set("X-Forwarded-For", c.ClientRequest.RemoteAddr)
 }
 
 var bufpool = &sync.Pool{New: func() any { return bytes.NewBuffer(make([]byte, 0, 128)) }}
 
 func getbuffer() *bytes.Buffer  { return bufpool.Get().(*bytes.Buffer) }
 func putbuffer(b *bytes.Buffer) { b.Reset(); bufpool.Put(b) }
-
-var errAuthFailure = errors.New("auth failed")
 
 func formatHeaders(headers []string) (exactHeaders map[string]struct{}, prefixHeaders []string) {
 	var elen, plen int

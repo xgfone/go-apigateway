@@ -17,7 +17,6 @@ package runtime
 import (
 	"context"
 	"log/slog"
-	"net"
 	"net/http"
 	"net/netip"
 	"net/url"
@@ -47,21 +46,14 @@ var ctxpool = &sync.Pool{New: func() any {
 }}
 
 // AcquireContext acquires a context from the pool.
-func AcquireContext() *Context { return ctxpool.Get().(*Context) }
+func AcquireContext(ctx context.Context) *Context {
+	c := ctxpool.Get().(*Context)
+	c.Context = ctx
+	return c
+}
 
 // ReleaseContext releases the context to the pool.
-func ReleaseContext(c *Context) {
-	clear(c.forwards)
-	clear(c.respbodys)
-	clear(c.respheaders)
-
-	*c = Context{
-		forwards:    c.forwards[:0],
-		respbodys:   c.respbodys[:0],
-		respheaders: c.respheaders[:0],
-	}
-	ctxpool.Put(c)
-}
+func ReleaseContext(c *Context) { c.Reset(); ctxpool.Put(c) }
 
 // Handler is used to handle the http request.
 type Handler func(c *Context)
@@ -76,17 +68,17 @@ type ResponseWriter interface {
 
 // Context represents a request context.
 type Context struct {
-	Mode        // Set by the router after matching the route or caller when calling the route.
-	Route Route // Set by the router after matching the route.
+	// Mode        // Set by the router after matching the route or caller when calling the route.
 
-	Context        context.Context // Set by the router
-	ClientRequest  *http.Request   // Set by the router
-	ClientResponse ResponseWriter  // Set by the router
+	Route          Route           // Set by the router after matching the route.
+	Context        context.Context // Set by the router after matching the route.
+	ClientRequest  *http.Request   // Set by the router after matching the route.
+	ClientResponse ResponseWriter  // Set by the router after matching the route.
 
 	Upstream *Upstream             // Set by the upstream
 	Endpoint loadbalancer.Endpoint // Set by the endpoint
 
-	Error            error          // Set by the upstream after forwarding the request.
+	Error            error          // Set when aborting the context process anytime.
 	UpstreamResponse *http.Response // Set by the upstream after forwarding the request.
 
 	Data interface{} // The contex data that is set and used by the final user.
@@ -100,6 +92,19 @@ type Context struct {
 	forwards    []func()
 	respheaders []func()
 	respbodys   []func()
+}
+
+// Reset resets the context to the initial state.
+func (c *Context) Reset() {
+	clear(c.forwards)
+	clear(c.respbodys)
+	clear(c.respheaders)
+
+	*c = Context{
+		forwards:    c.forwards[:0],
+		respbodys:   c.respbodys[:0],
+		respheaders: c.respheaders[:0],
+	}
 }
 
 // ------------------------------------------------------------------------- //
@@ -143,6 +148,12 @@ func (c *Context) UpstreamRequest() *http.Request {
 
 func (c *Context) upRequest() *http.Request { return c.upreq }
 
+// IsAborted reports whether the context process is aborted.
+func (c *Context) IsAborted() bool { return c.Error != nil }
+
+// Abort sets the error informaion and aborts the context process.
+func (c *Context) Abort(err error) { c.Error = err }
+
 // ------------------------------------------------------------------------- //
 
 // Cookie returns the cookie value by the name.
@@ -173,13 +184,7 @@ func (c *Context) Queries() url.Values {
 
 func (c *Context) ClientIP() netip.Addr {
 	if conn := nets.GetConnFromContext(c.Context); conn != nil {
-		ip := conn.RemoteAddr().(*net.TCPAddr).IP
-		if ipv4 := ip.To4(); ipv4 != nil {
-			ip = ipv4
-		}
-		addr, _ := netip.AddrFromSlice(ip)
-		return addr
-		// return assists.ConvertAddr(conn.RemoteAddr())
+		return assists.ConvertAddr(conn.RemoteAddr())
 	}
 
 	addr, _ := netip.ParseAddr(assists.TrimIP(c.ClientRequest.RemoteAddr))
@@ -209,12 +214,11 @@ func (c *Context) SetResponseHandler(h ResponseHandler) {
 }
 
 // SendResponse sends the response from the upstream server to the client.
-func (c *Context) SendResponse(resp *http.Response, err error) {
-	c.UpstreamResponse, c.Error = resp, err
+func (c *Context) SendResponse() {
 	if c.Route.response == nil {
-		StdResponse(c, resp, err)
+		StdResponse(c, c.UpstreamResponse, c.Error)
 	} else {
-		c.Route.response(c, resp, err)
+		c.Route.response(c, c.UpstreamResponse, c.Error)
 	}
 }
 

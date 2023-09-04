@@ -12,5 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package runtime implements the core runtime engine of the api gateway.
 package runtime
+
+// Config used to return the configuration information of an object.
+type Config interface {
+	Config() any
+}
+
+// GetConfig calls the Config method if i has implemented the interface Config.
+// Or, return nil instead.
+func GetConfig(i any) any {
+	if c, ok := i.(Config); ok {
+		return c.Config()
+	}
+	return nil
+}

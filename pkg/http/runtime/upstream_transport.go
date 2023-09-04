@@ -58,14 +58,21 @@ func newRequest(orig *http.Request) *http.Request {
 	return req
 }
 
-func newUpstreamRequest(c *Context) *http.Request {
-	req := NewRequest(c.ClientRequest)
-	req.URL.User = nil           // Clear the basic auth.
-	req.Close = false            // Enable the keepalive
-	req.Header.Del("Connection") // Enable the keepalive
+func newUpstreamRequest(c *Context) (req *http.Request) {
+	if c.ClientRequest == nil {
+		panic("runtime.NewUpstreamRequest: ClientRequest is nil")
+	}
 
-	// At upstream or endpoint forwarding point.
-	if c.Upstream != nil {
+	if c.ClientResponse == nil { // call directly
+		req = c.ClientRequest
+	} else { // server forward
+		req = NewRequest(c.ClientRequest)
+		req.URL.User = nil           // Clear the basic auth.
+		req.Close = false            // Enable the keepalive
+		req.Header.Del("Connection") // Enable the keepalive
+	}
+
+	if c.Upstream != nil && req != nil {
 		updateUpstreamRequest(c, req)
 	}
 	return req

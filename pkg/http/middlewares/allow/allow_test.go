@@ -28,32 +28,26 @@ func TestAllow(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var merr error
-	c := runtime.AcquireContext()
-	c.Context = context.Background()
-	c.SetModeForward()
-	c.SetResponseHandler(func(ctx *runtime.Context, r *http.Response, err error) {
-		merr = err
-	})
+	c := runtime.AcquireContext(context.Background())
 
 	handler := mw.Handler(func(c *runtime.Context) {})
 	c.ClientRequest = &http.Request{RemoteAddr: "127.0.0.1"}
 	handler(c)
-	if merr != nil {
-		t.Errorf("expect nil, but got an error: %v", merr)
+	if c.Error != nil {
+		t.Errorf("expect nil, but got an error: %v", c.Error)
 	}
 
-	merr = nil
+	c.Error = nil
 	c.ClientRequest = &http.Request{RemoteAddr: "192.168.1.1"}
 	handler(c)
-	if merr != nil {
-		t.Errorf("expect nil, but got an error: %v", merr)
+	if c.Error != nil {
+		t.Errorf("expect nil, but got an error: %v", c.Error)
 	}
 
-	merr = nil
+	c.Error = nil
 	c.ClientRequest = &http.Request{RemoteAddr: "1.2.3.4"}
 	handler(c)
-	if merr == nil {
+	if c.Error == nil {
 		t.Errorf("expect an error, but got nil")
 	}
 }
