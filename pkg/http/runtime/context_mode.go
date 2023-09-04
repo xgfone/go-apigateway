@@ -43,14 +43,14 @@ func (m Mode) String() string {
 	}
 }
 
-// IsValid reports whether the mode is valid.
-func (m Mode) IsValid() bool { return m != ModeNone }
+// IsModeValid reports whether the mode is valid.
+func (m Mode) IsModeValid() bool { return m != ModeNone }
 
-// IsCall reports whether the mode is call.
-func (m Mode) IsCall() bool { return m == ModeCall }
+// IsModeCall reports whether the mode is call.
+func (m Mode) IsModeCall() bool { return m == ModeCall }
 
-// IsForward reports whether the mode is forward.
-func (m Mode) IsForward() bool { return m == ModeForward }
+// IsModeForward reports whether the mode is forward.
+func (m Mode) IsModeForward() bool { return m == ModeForward }
 
 // SetModeCall sets the context running mode to ModeCall.
 func (c *Context) SetModeCall() { c.Mode = ModeCall }
@@ -62,7 +62,7 @@ func (c *Context) SetModeForward() { c.Mode = ModeForward }
 // If not, call the not handler if not nil, and return false.
 // If yes, do nothing and return true.
 func (c *Context) NeedModeCall(source string, not Handler) (ok bool) {
-	if ok = c.IsCall(); !ok {
+	if ok = c.IsModeCall(); !ok {
 		slog.Warn("the running mode is invalid",
 			slog.String("reqid", c.RequestID()),
 			slog.String("requester", source),
@@ -81,7 +81,7 @@ func (c *Context) NeedModeCall(source string, not Handler) (ok bool) {
 // If not, call the not handler if not nil, and return false.
 // If yes, do nothing and return true.
 func (c *Context) NeedModeForward(source string, not Handler) (ok bool) {
-	if ok = c.IsForward(); !ok {
+	if ok = c.IsModeForward(); !ok {
 		slog.Warn("the running mode is invalid",
 			slog.String("reqid", c.RequestID()),
 			slog.String("requester", source),
@@ -96,18 +96,18 @@ func (c *Context) NeedModeForward(source string, not Handler) (ok bool) {
 	return
 }
 
-// MustCall checks whether the running mode is at ModeCall.
+// MustModeCall checks whether the running mode is at ModeCall.
 // If not, panic with the source.
-func (c *Context) MustCall(source string) {
-	if !c.IsCall() {
+func (c *Context) MustModeCall(source string) {
+	if !c.IsModeCall() {
 		panic(fmt.Sprintf("%s: the running mode is not at ModeCall", source))
 	}
 }
 
-// MustForward checks whether the running mode is at ModeForward.
+// MustModeForward checks whether the running mode is at ModeForward.
 // If not, panic with the source.
-func (c *Context) MustForward(source string) {
-	if !c.IsForward() {
+func (c *Context) MustModeForward(source string) {
+	if !c.IsModeForward() {
 		panic(fmt.Sprintf("%s: the running mode is not at ModeForward", source))
 	}
 }

@@ -26,7 +26,7 @@ import (
 // UpstreamForward forwards the request to one of the upstream servers
 // by the upstream, which must run on the Forward mode.
 func UpstreamForward(c *Context) {
-	c.MustForward("runtime.UpstreamForward")
+	c.MustModeForward("runtime.UpstreamForward")
 
 	upstream := upstream.DefaultManager.Get(c.Route.Route.Upstream)
 	if upstream == nil {

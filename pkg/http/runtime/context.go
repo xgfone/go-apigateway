@@ -40,9 +40,9 @@ func newResponseWriter(w http.ResponseWriter) ResponseWriter {
 
 var ctxpool = &sync.Pool{New: func() any {
 	return &Context{
-		upcbs: make([]func(), 0, 2),
-		rhcbs: make([]func(), 0, 4),
-		rbcbs: make([]func(), 0, 2),
+		forwards:    make([]func(), 0, 2),
+		respbodys:   make([]func(), 0, 2),
+		respheaders: make([]func(), 0, 4),
 	}
 }}
 
@@ -51,10 +51,15 @@ func AcquireContext() *Context { return ctxpool.Get().(*Context) }
 
 // ReleaseContext releases the context to the pool.
 func ReleaseContext(c *Context) {
-	clear(c.rhcbs)
-	clear(c.rbcbs)
+	clear(c.forwards)
+	clear(c.respbodys)
+	clear(c.respheaders)
 
-	*c = Context{rhcbs: c.rhcbs[:0], rbcbs: c.rbcbs[:0]}
+	*c = Context{
+		forwards:    c.forwards[:0],
+		respbodys:   c.respbodys[:0],
+		respheaders: c.respheaders[:0],
+	}
 	ctxpool.Put(c)
 }
 
@@ -91,15 +96,17 @@ type Context struct {
 	upreq   *http.Request
 	queries url.Values
 	cookies []*http.Cookie
-	upcbs   []func()
-	rhcbs   []func()
-	rbcbs   []func()
+
+	forwards    []func()
+	respheaders []func()
+	respbodys   []func()
 }
 
-func (c *Context) upRequest() *http.Request  { return c.upreq }
-func (c *Context) callbackOnForward()        { runcbs(c.upcbs) }
-func (c *Context) callbackOnResponseBody()   { runcbs(c.rbcbs) }
-func (c *Context) callbackOnResponseHeader() { runcbs(c.rhcbs) }
+// ------------------------------------------------------------------------- //
+
+func (c *Context) callbackOnForward()        { runcbs(c.forwards) }
+func (c *Context) callbackOnResponseBody()   { runcbs(c.respbodys) }
+func (c *Context) callbackOnResponseHeader() { runcbs(c.respheaders) }
 
 func runcbs(cbs []func()) {
 	for _, f := range cbs {
@@ -110,20 +117,20 @@ func runcbs(cbs []func()) {
 // OnForward appends the callback function, which is called
 // before upstream forwards the request.
 func (c *Context) OnForward(cb func()) {
-	c.upcbs = append(c.upcbs, cb)
+	c.forwards = append(c.forwards, cb)
 }
 
 // OnResponseHeader appends the callback function, which is called
 // after setting the response header and before copying the response body
 // from the upstream server to the client.
 func (c *Context) OnResponseHeader(cb func()) {
-	c.rhcbs = append(c.rhcbs, cb)
+	c.respheaders = append(c.respheaders, cb)
 }
 
 // OnResponseBody appends the callback function, which is called
 // after copying the response body from the upstream server to the client.
 func (c *Context) OnResponseBody(cb func()) {
-	c.rbcbs = append(c.rbcbs, cb)
+	c.respbodys = append(c.respbodys, cb)
 }
 
 // UpstreamRequest returns the http request forwarded to the upstream server.
@@ -133,6 +140,10 @@ func (c *Context) UpstreamRequest() *http.Request {
 	}
 	return c.upreq
 }
+
+func (c *Context) upRequest() *http.Request { return c.upreq }
+
+// ------------------------------------------------------------------------- //
 
 // Cookie returns the cookie value by the name.
 func (c *Context) Cookie(name string) string {

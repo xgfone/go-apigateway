@@ -24,7 +24,7 @@ import (
 // UpstreamCall calls the request to the upstream server,
 // which must run on the Call mode.
 func UpstreamCall(c *Context) {
-	c.MustCall("runtime.UpstreamCall")
+	c.MustModeCall("runtime.UpstreamCall")
 
 	upstream := upstream.DefaultManager.Get(c.Route.Route.Upstream)
 	if upstream == nil {
