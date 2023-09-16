@@ -49,11 +49,17 @@ type proxy struct {
 	addr string
 }
 
-func (p proxy) Serve(_ context.Context, req any) (any, error) {
+func (p proxy) Serve(ctx context.Context, req any) (any, error) {
 	c := req.(*core.Context)
 	c.Endpoint = p.Endpoint
 
 	r := c.UpstreamRequest
+	if c.ForwardTimeout > 0 {
+		ctx, cancel := context.WithTimeout(ctx, c.ForwardTimeout)
+		defer cancel()
+		r = r.WithContext(ctx)
+	}
+
 	r.URL.Host = p.addr
 	if r.Host == "" {
 		r.Host = p.addr
