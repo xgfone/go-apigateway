@@ -16,98 +16,78 @@ package main
 
 import (
 	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"net"
 	"os"
-)
+	"path/filepath"
+	"strings"
+	"time"
 
-// TODO:
-// tls.Config:
-//     ServerName(string): Client: vhost
-//     InsecureSkipVerify(bool)
-//     RootCAs: Client verifies the certificate of Server
-//     Certs:
+	"github.com/xgfone/go-apigateway/logger"
+	"github.com/xgfone/go-atexit"
+	"github.com/xgfone/go-tlsx"
+)
 
 var (
 	tlsjsonfile = flag.String("tls.jsonfile", "", "If set, add all the certificates in the file to the server.")
-	tlscertfile = flag.String("tls.certfile", "", "The path of the certificate file.")
-	tlskeyfile  = flag.String("tls.keyfile", "", "The path of the certificate key file.")
+	tlscertfile = flag.String("tls.certfile", "", "The path of the certificate file. If set, start api gateway with HTTPS.")
+	tlskeyfile  = flag.String("tls.keyfile", "", "The path of the certificate key file. If set, start api gateway with HTTPS.")
+
+	reloadcert = make(chan struct{}, 1)
 )
 
 func tryTLSListener(ln net.Listener) net.Listener {
 	if tlsconfig := getTLSConfig(); tlsconfig != nil {
 		ln = tls.NewListener(ln, tlsconfig)
+	} else {
+		go loopreloadcert()
 	}
 	return ln
 }
 
-func getTLSConfig() (tlsconfig *tls.Config) {
+func loopreloadcert() {
+	for {
+		select {
+		case <-reloadcert:
+		case <-atexit.Done():
+			return
+		}
+	}
+}
+
+func getTLSConfig() *tls.Config {
 	files := getTLSCertFiles(*tlscertfile, *tlskeyfile, *tlsjsonfile)
-	if len(files) > 0 {
-		certs, err := parseCertificateFiles(files...)
-		if err != nil {
-			fatal("fail to parse the certificate files", "files", files, "err", err)
-		}
-
-		return &tls.Config{
-			GetCertificate: func(chi *tls.ClientHelloInfo) (*tls.Certificate, error) {
-				for i, _len := 0, len(certs); i < _len; i++ {
-					if err := chi.SupportsCertificate(certs[i]); err == nil {
-						return certs[i], nil
-					}
-				}
-				return nil, fmt.Errorf("tls: no proper certificate is configured for '%s'", chi.ServerName)
-			},
-		}
-	}
-	return
-}
-
-func parseCertificate(certpem, keypem []byte) (tls.Certificate, error) {
-	tlscert, err := tls.X509KeyPair(certpem, keypem)
-	if err != nil {
-		return tlscert, err
+	if len(files) == 0 {
+		return nil
 	}
 
-	if tlscert.Leaf == nil {
-		tlscert.Leaf, err = x509.ParseCertificate(tlscert.Certificate[0])
-		if err != nil {
-			return tlscert, err
-		}
+	cb := func(name string) func(*tls.Certificate) {
+		return func(c *tls.Certificate) { tlsx.DefaultCertManager.Add(name, c) }
 	}
 
-	return tlscert, nil
-}
-
-func parseCertificateFiles(files ...keycertfile) ([]*tls.Certificate, error) {
-	certs := make([]*tls.Certificate, len(files))
-	for i, f := range files {
-		certpem, err := os.ReadFile(f.CertFile)
-		if err != nil {
-			return nil, err
+	for i, file := range files {
+		name := file.Name
+		if name == "" {
+			key := strings.TrimSuffix(file.KeyFile, filepath.Ext(file.KeyFile))
+			cert := strings.TrimSuffix(file.CertFile, filepath.Ext(file.CertFile))
+			if key == cert {
+				name = cert
+			} else {
+				name = fmt.Sprintf("cert%d", i+1)
+			}
 		}
-
-		keypem, err := os.ReadFile(f.KeyFile)
-		if err != nil {
-			return nil, err
-		}
-
-		cert, err := parseCertificate(certpem, keypem)
-		if err != nil {
-			return nil, err
-		}
-
-		certs[i] = &cert
+		go tlsx.WatchCertFiles(atexit.Context(), reloadcert, time.Minute, file.CertFile, file.KeyFile, cb(name))
 	}
-	return certs, nil
+
+	return tlsx.DefaultCertManager.ServerConfig(nil)
 }
 
 type keycertfile struct {
-	CertFile string
-	KeyFile  string
+	Name     string `json:"name"`
+	KeyFile  string `json:"keyFile"`
+	CertFile string `json:"certFile"`
 }
 
 func getTLSCertFiles(certfile, keyfile, jsonfile string) (files []keycertfile) {
@@ -118,15 +98,14 @@ func getTLSCertFiles(certfile, keyfile, jsonfile string) (files []keycertfile) {
 	if jsonfile != "" {
 		data, err := os.ReadFile(jsonfile)
 		if err != nil {
-			fatal("fail to read the tls json config file", "file", jsonfile, "err", err)
+			logger.Fatal("fail to read the tls json config file", "file", jsonfile, "err", err)
 		}
 
 		if len(data) > 0 {
-			// data = bytex.RemoveComments(data)
 			if len(data) > 0 {
 				var results []keycertfile
 				if err := json.Unmarshal(data, &results); err != nil {
-					fatal("fail to parse the tls json config file", "file", jsonfile, "err", err)
+					logger.Fatal("fail to parse the tls json config file", "file", jsonfile, "err", err)
 				}
 				files = append(files, results...)
 			}

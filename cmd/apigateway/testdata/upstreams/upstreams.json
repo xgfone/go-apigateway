@@ -1,10 +1,9 @@
 [
     {
         "id": "upstream",
+        "host": "localhost",
         "policy": "wrr",
-        "timeout": 3, // 3s
-        "middlewareGroup": "",
-        "middlewares": {},
+        "timeout": 3000, // 3s
         "discovery": {
             "static": {
                 "servers": [

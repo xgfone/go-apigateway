@@ -48,6 +48,7 @@ debug_test
 _*
 
 # test
+test/
 testdata/
 
 # bin

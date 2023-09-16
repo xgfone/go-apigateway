@@ -1,0 +1,1 @@
+./apigateway -gatewayaddr :8000 -manageraddr :9000 --provider.localfiledir.httpmiddlewaregroups testdata/httpmiddlewaregroups  -provider.localfiledir.httproutes testdata/httproutes -provider.localfiledir.upstreams testdata/upstreams $@

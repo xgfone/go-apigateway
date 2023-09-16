@@ -1,7 +1,6 @@
 github.com/google/go-cmp v0.5.8/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
-github.com/xgfone/go-defaults v0.12.0 h1:QqBebmD06gLyG5OFXVNRiApYIlows5wM2q5lQoWnkZA=
-github.com/xgfone/go-defaults v0.12.0/go.mod h1:4qxXP2vvK8n2csVwYmFbhbQAISq5s/2zYZE9CKYj/bw=
-github.com/xgfone/go-loadbalancer v0.0.0-20230903055907-6ed28118b546 h1:THYmIyS9c2uOGWCeRO2T0yl1OyhpoXJ1FXvYcuQdh8E=
-github.com/xgfone/go-loadbalancer v0.0.0-20230903055907-6ed28118b546/go.mod h1:twl5XhoD8lkyuEePkreOkCu+7ltvIxmQ7XCYUcnvW0s=
+github.com/xgfone/go-checker v0.3.0/go.mod h1:HNkJUfk+bHfGLsI5PnnX3dYrS6aD+eMkcQDLjP2iWrU=
+github.com/xgfone/go-tlsx v0.1.0 h1:iu5YkIirMvsQc6RMPswlabUsZSvGSEo265sEzxbYEB8=
+github.com/xgfone/go-tlsx v0.1.0/go.mod h1:qnvBKGWdGRmVvjSJrx9q4hfLrEJdMt+EC+SuYuNUD6s=
 golang.org/x/mod v0.6.0/go.mod h1:4mET923SAdbXp2ki8ey+zGs1SLqsuM2Y0uvdZR/fUNI=
 golang.org/x/tools v0.2.0/go.mod h1:y4OqIKeOV/fWJetJ8bXPU1sEVniLMIyDAZWeHdV+NTA=

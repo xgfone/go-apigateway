@@ -18,21 +18,46 @@ import (
 	"encoding/json"
 	"flag"
 	"net/http"
-	"time"
 
-	"github.com/xgfone/go-apigateway/pkg/http/discovery"
-	"github.com/xgfone/go-apigateway/pkg/http/runtime"
-	"github.com/xgfone/go-loadbalancer"
+	"github.com/xgfone/go-apigateway/http/middleware"
+	"github.com/xgfone/go-apigateway/http/router"
+	"github.com/xgfone/go-apigateway/orch"
+	"github.com/xgfone/go-apigateway/upstream"
+	"github.com/xgfone/go-loadbalancer/endpoint"
 )
 
-var manageraddr = flag.String("manageraddr", "", "The address used by manager.")
+var manageraddr = flag.String("manageraddr", "", "The address used by manager. If set, start it.")
 
 func initmanager() {
 	if *manageraddr != "" {
-		registerProviderRoutes()
+		regiseterReloadRoutes()
+		regiseterLoaderRoutes()
 		regiseterRuntimeRoutes()
 		go startserver(*manageraddr, http.DefaultServeMux, false)
 	}
+}
+
+func regiseterReloadRoutes() {
+	http.HandleFunc("/apigateway/reload/configs", func(w http.ResponseWriter, r *http.Request) {
+		reloadconf <- struct{}{}
+	})
+	http.HandleFunc("/apigateway/reload/tlscerts", func(w http.ResponseWriter, r *http.Request) {
+		reloadcert <- struct{}{}
+	})
+}
+
+func regiseterLoaderRoutes() {
+	http.HandleFunc("/apigateway/loader/upstreams", func(w http.ResponseWriter, r *http.Request) {
+		sendjson(w, map[string]any{"upstreams": upstreamsloader.Resource()})
+	})
+
+	http.HandleFunc("/apigateway/loader/http/routes", func(w http.ResponseWriter, r *http.Request) {
+		sendjson(w, map[string]any{"routes": httproutesloader.Resource()})
+	})
+
+	http.HandleFunc("/apigateway/loader/http/middlewares/groups", func(w http.ResponseWriter, r *http.Request) {
+		sendjson(w, map[string]any{"groups": httpmwgroupsloader.Resource()})
+	})
 }
 
 func sendjson(w http.ResponseWriter, v any) {
@@ -41,67 +66,47 @@ func sendjson(w http.ResponseWriter, v any) {
 	_ = json.NewEncoder(w).Encode(v)
 }
 
-func registerProviderRoutes() {
-	http.HandleFunc("/apigateway/provider/routes", func(w http.ResponseWriter, r *http.Request) {
-		sendjson(w, routesLoader.Resource())
-	})
-
-	http.HandleFunc("/apigateway/provider/upstreams", func(w http.ResponseWriter, r *http.Request) {
-		sendjson(w, upstreamsLoader.Resource())
-	})
-
-	http.HandleFunc("/apigateway/provider/middlewares/groups", func(w http.ResponseWriter, r *http.Request) {
-		sendjson(w, mdwgroupsLoader.Resource())
-	})
-}
-
 func regiseterRuntimeRoutes() {
-	http.HandleFunc("/apigateway/runtime/routes", func(w http.ResponseWriter, r *http.Request) {
-		sendjson(w, runtime.DefaultRouter.Routes())
-	})
-
 	http.HandleFunc("/apigateway/runtime/upstreams", func(w http.ResponseWriter, r *http.Request) {
-		_ups := runtime.GetUpstreams()
-		ups := make([]any, len(_ups))
-		for i, _up := range _ups {
-			f := _up.Forwarder()
-			d := f.GetDiscovery().(*discovery.StaticDiscovery)
-			eps := make([]any, 0, d.Len())
-			d.Range(func(ep loadbalancer.Endpoint, online bool) bool {
-				var config any
-				if v, ok := ep.(interface{ Config() any }); ok {
-					config = v.Config()
+		_ups := upstream.Manager.Gets()
+		ups := make([]any, 0, len(_ups))
+		for _, _up := range _ups {
+			_eps := _up.Discover().Endpoints
+			eps := make([]map[string]any, len(_eps))
+			for i, ep := range _eps {
+				eps[i] = map[string]any{
+					"host":   ep.ID(),
+					"weight": endpoint.GetWeight(ep),
 				}
-				eps = append(eps, map[string]any{
-					"id":     ep.ID(),
-					"config": config,
-					"online": online,
-				})
-				return true
-			})
-
-			ups[i] = map[string]any{
-				"id":          _up.UpConfig.Id,
-				"policy":      f.GetBalancer().Policy(),
-				"timeout":     f.GetTimeout() / time.Second,
-				"endpoints":   eps,
-				"healthCheck": d.HealthCheck(),
 			}
+
+			ups = append(ups, map[string]any{
+				"id":        _up.Name(),
+				"host":      _up.Host(),
+				"scheme":    _up.Scheme(),
+				"policy":    _up.GetBalancer().Policy(),
+				"timeout":   _up.GetTimeout().String(),
+				"endpoints": eps,
+			})
 		}
-		sendjson(w, ups)
+		sendjson(w, map[string][]any{"upstreams": ups})
 	})
 
-	http.HandleFunc("/apigateway/runtime/middlewares/groups", func(w http.ResponseWriter, r *http.Request) {
-		_groups := runtime.DefaultMiddlewareGroupManager.Groups()
+	http.HandleFunc("/apigateway/runtime/http/routes", func(w http.ResponseWriter, r *http.Request) {
+		sendjson(w, map[string]any{"routes": router.DefaultRouter.Routes()})
+	})
+
+	http.HandleFunc("/apigateway/runtime/http/middlewares/groups", func(w http.ResponseWriter, r *http.Request) {
+		_groups := middleware.DefaultGroupManager.Gets()
 		groups := make(map[string]any, len(_groups))
 		for id, _group := range _groups {
 			_mws := _group.Middlewares()
 			mws := make(map[string]any, len(_mws))
 			for _, _mw := range _mws {
-				mws[_mw.Name()] = runtime.GetConfig(_mw)
+				mws[_mw.Name()] = orch.GetConfig(_mw)
 			}
 			groups[id] = mws
 		}
-		sendjson(w, groups)
+		sendjson(w, map[string]any{"groups": groups})
 	})
 }

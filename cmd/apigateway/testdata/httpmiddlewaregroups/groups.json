@@ -1,0 +1,26 @@
+[
+    // Only allow 127.0.0.0/8 and deny others.
+    {
+        "name": "onlyallow127",
+        "middlewares": [
+            {
+                "name": "allow",
+                "conf": { // For "allow" or "block" middleware, conf may be a map with the key "cidrs".
+                    "cidrs": [
+                        "127.0.0.0/8"
+                    ]
+                }
+            }
+        ]
+    },
+    // Only deny 127.0.0.0/8 and allow others.
+    {
+        "name": "onlydeny127",
+        "middlewares": [
+            {
+                "name": "block",
+                "conf": "127.0.0.0/8" // For "allow" or "block" middleware, conf may be a string or []string.
+            }
+        ]
+    }
+]

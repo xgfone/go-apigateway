@@ -15,75 +15,39 @@
 package main
 
 import (
-	"context"
 	"flag"
-	"log"
-	"log/slog"
 	"net"
 	"net/http"
-	"time"
 
-	"github.com/xgfone/go-apigateway/pkg/http/runtime"
-	"github.com/xgfone/go-apigateway/pkg/nets"
+	"github.com/xgfone/go-apigateway/http/router"
+	"github.com/xgfone/go-apigateway/http/server"
+	"github.com/xgfone/go-apigateway/osx"
 	"github.com/xgfone/go-atexit"
 	"github.com/xgfone/go-atexit/signal"
 )
 
 var gatewayaddr = flag.String("gatewayaddr", ":80", "The address used by gateway.")
 
+func init() { osx.Exit = atexit.Exit }
+
 func main() {
 	flag.Parse()
 	initlogging()
-	initloader()
 	initmanager()
+	initloader()
 	go signal.WaitExit(atexit.Execute)
-	startserver(*gatewayaddr, runtime.DefaultRouter, true)
+	startserver(*gatewayaddr, router.DefaultRouter, true)
+	atexit.Wait() // wait that all the clean functions end.
 }
 
 func startserver(addr string, handler http.Handler, trytls bool) {
-	ln, err := net.Listen("tcp", addr)
-	if err != nil {
-		fatal("fail to listen on the address", "protocol", "tcp", "addr", addr, "err", err)
-		return
-	}
+	svr := server.New(addr, handler)
+	svr.RegisterOnShutdown(atexit.Execute)
+	atexit.OnExit(func() { server.Stop(svr) })
 
+	var cb func(net.Listener) net.Listener
 	if trytls {
-		ln = tryTLSListener(ln)
+		cb = tryTLSListener
 	}
-
-	server := newServer(handler)
-	server.RegisterOnShutdown(atexit.Execute)
-	atexit.OnExit(func() { _ = server.Shutdown(context.Background()) })
-
-	slog.Info("start the http server", "addr", addr)
-	_ = server.Serve(ln)
-	slog.Info("stop the http server", "addr", addr)
-}
-
-func newServer(handler http.Handler) *http.Server {
-	return &http.Server{
-		Handler: handler,
-
-		ReadTimeout:  0,
-		WriteTimeout: 0,
-
-		IdleTimeout:       time.Minute * 3,
-		ReadHeaderTimeout: time.Second * 3,
-
-		ErrorLog:    errLogger(),
-		BaseContext: baseContext,
-		ConnContext: connContext,
-	}
-}
-
-func errLogger() *log.Logger {
-	return slog.NewLogLogger(slog.Default().Handler(), slog.LevelError)
-}
-
-func baseContext(ln net.Listener) context.Context {
-	return nets.SetListenerIntoContext(atexit.Context(), ln)
-}
-
-func connContext(ctx context.Context, conn net.Conn) context.Context {
-	return nets.SetConnIntoContext(ctx, conn)
+	server.StartWithListenerCallback(svr, cb)
 }

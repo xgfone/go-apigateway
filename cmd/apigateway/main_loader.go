@@ -18,37 +18,77 @@ import (
 	"flag"
 	"time"
 
-	_ "github.com/xgfone/go-apigateway/pkg/http/discovery"
-	_ "github.com/xgfone/go-apigateway/pkg/http/middlewares"
+	_ "github.com/xgfone/go-apigateway/http/middleware/middlewares"
 
-	"github.com/xgfone/go-apigateway/pkg/http/loader"
-	"github.com/xgfone/go-apigateway/pkg/http/provider/localfiles"
+	"github.com/xgfone/go-apigateway/loader/dirloader"
+	"github.com/xgfone/go-apigateway/orch"
+	"github.com/xgfone/go-apigateway/orch/updater"
 	"github.com/xgfone/go-atexit"
 )
 
 var (
-	_                 = flag.String("provider", "localfiledir", "The provider of the dynamic configurations.")
-	routeslocaldir    = flag.String("provider.localfiledir.routes", "routes", "The directory of the local files storing the dynamic routes.")
-	upstreamslocaldir = flag.String("provider.localfiledir.upstreams", "upstreams", "The directory of the local files storing the dynamic upstreams.")
-	mdwgroupslocaldir = flag.String("provider.localfiledir.middlewaregroups", "middlewaregroups", "The directory of the local files storing the dynamic middleware groups.")
+	_                    = flag.String("provider", "localfiledir", "The provider of the dynamic configurations.")
+	upstreamslocaldir    = flag.String("provider.localfiledir.upstreams", "upstreams", "The directory of the local files storing the upstreams.")
+	httprouteslocaldir   = flag.String("provider.localfiledir.httproutes", "httproutes", "The directory of the local files storing the http routes.")
+	httpmwgroupslocaldir = flag.String("provider.localfiledir.httpmiddlewaregroups", "httpmiddlewaregroups", "The directory of the local files storing the http middleware groups.")
+	localfiledirinterval = flag.Duration("provider.localfiledir.interval", time.Minute, "The interval duration to check and reload the configurations.")
 )
 
 var (
-	routesLoader    loader.ResourceLoader
-	upstreamsLoader loader.ResourceLoader
-	mdwgroupsLoader loader.ResourceLoader
+	reloadconf         = make(chan struct{}, 1)
+	upstreamsloader    *dirloader.DirLoader[orch.Upstream]
+	httproutesloader   *dirloader.DirLoader[orch.HttpRoute]
+	httpmwgroupsloader *dirloader.DirLoader[orch.MiddlewareGroup]
 )
 
 func initloader() {
-	routesProvider := localfiles.RouteProvider(*routeslocaldir)
-	upstreamsProvider := localfiles.UpstreamProvider(*upstreamslocaldir)
-	mdwgroupsProvider := localfiles.MiddlewareGroupProvider(*mdwgroupslocaldir)
+	interval := *localfiledirinterval
+	upstreamsch := make(chan []orch.Upstream)
+	upstreamsloader = dirloader.New[orch.Upstream](*upstreamslocaldir)
+	go upstreamsloader.Sync(atexit.Context(), "upstreams", interval, reloadconf, upstreamsch, updateUpstreams)
+	go updater.SyncUpstreams(atexit.Context(), upstreamsch)
 
-	routesLoader = loader.RouteProviderLoader(routesProvider, time.Minute)
-	upstreamsLoader = loader.UpstreamProviderLoader(upstreamsProvider, time.Minute)
-	mdwgroupsLoader = loader.MiddlewareGroupProviderLoader(mdwgroupsProvider, time.Minute)
+	httproutesch := make(chan []orch.HttpRoute)
+	httproutesloader = dirloader.New[orch.HttpRoute](*httprouteslocaldir)
+	go httproutesloader.Sync(atexit.Context(), "httproutes", interval, reloadconf, httproutesch, updateHttpRoutes)
+	go updater.SyncHttpRoutes(atexit.Context(), httproutesch)
 
-	go routesLoader.Load(atexit.Context())
-	go upstreamsLoader.Load(atexit.Context())
-	go mdwgroupsLoader.Load(atexit.Context())
+	httpmwgroupsch := make(chan []orch.MiddlewareGroup)
+	httpmwgroupsloader = dirloader.New[orch.MiddlewareGroup](*httpmwgroupslocaldir)
+	go httpmwgroupsloader.Sync(atexit.Context(), "httpmiddlewaregroups", interval, reloadconf, httpmwgroupsch, nil)
+	go updater.SyncHttpMiddlewareGroups(atexit.Context(), httpmwgroupsch)
+}
+
+func updateUpstreams(ups []orch.Upstream) (changed bool) {
+	for i, _len := 0, len(ups); i < _len; i++ {
+		up := &ups[i]
+
+		if up.Timeout > 0 && up.Timeout < time.Second {
+			up.Timeout *= time.Millisecond
+			changed = true
+		}
+
+		if up.Retry.Interval > 0 && up.Retry.Interval < time.Second {
+			up.Retry.Interval *= time.Millisecond
+			changed = true
+		}
+	}
+	return
+}
+
+func updateHttpRoutes(routes []orch.HttpRoute) (changed bool) {
+	for i, _len := 0, len(routes); i < _len; i++ {
+		r := &routes[i]
+
+		if r.RequestTimeout > 0 && r.RequestTimeout < time.Second {
+			r.RequestTimeout *= time.Millisecond
+			changed = true
+		}
+
+		if r.ForwardTimeout > 0 && r.ForwardTimeout < time.Second {
+			r.ForwardTimeout *= time.Millisecond
+			changed = true
+		}
+	}
+	return
 }

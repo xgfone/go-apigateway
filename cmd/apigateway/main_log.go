@@ -16,43 +16,17 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log/slog"
 	"os"
 
-	"github.com/xgfone/go-atexit"
-	"github.com/xgfone/go-defaults"
+	"github.com/xgfone/go-apigateway/logger"
 )
-
-// TODO: log file and configuration file
 
 var loglevel = flag.String("log.level", "info", "The log level, such as debug, info, warn, error.")
 
 func initlogging() {
-	var level slog.Level
-	if err := level.UnmarshalText([]byte(*loglevel)); err != nil {
-		fatal("fail to parse the log level", "level", *loglevel, "err", err)
+	if err := logger.Level.UnmarshalText([]byte(*loglevel)); err != nil {
+		logger.Fatal("fail to parse the log level", "level", *loglevel, "err", err)
 	}
-
-	handler := slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
-		ReplaceAttr: replaceSourceAttr,
-		AddSource:   true,
-		Level:       level,
-	})
-	slog.SetDefault(slog.New(handler))
-}
-
-func replaceSourceAttr(groups []string, a slog.Attr) slog.Attr {
-	switch {
-	case a.Key == slog.SourceKey:
-		if src, ok := a.Value.Any().(*slog.Source); ok {
-			a.Value = slog.StringValue(fmt.Sprintf("%s:%d", defaults.TrimPkgFile(src.File), src.Line))
-		}
-	}
-	return a
-}
-
-func fatal(msg string, args ...any) {
-	slog.Error(msg, args...)
-	atexit.Exit(1)
+	slog.SetDefault(slog.New(logger.NewJSONHandler(os.Stderr)))
 }
