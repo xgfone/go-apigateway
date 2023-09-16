@@ -18,5 +18,6 @@ package middlewares
 import (
 	_ "github.com/xgfone/go-apigateway/http/middleware/middlewares/allow"
 	_ "github.com/xgfone/go-apigateway/http/middleware/middlewares/block"
+	_ "github.com/xgfone/go-apigateway/http/middleware/middlewares/cors"
 	_ "github.com/xgfone/go-apigateway/http/middleware/middlewares/redirect"
 )
