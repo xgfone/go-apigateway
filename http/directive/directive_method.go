@@ -12,13 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package middlewares is used to register the builtin middlewares.
-package middlewares
+package directive
 
-import (
-	_ "github.com/xgfone/go-apigateway/http/middleware/middlewares/allow"
-	_ "github.com/xgfone/go-apigateway/http/middleware/middlewares/block"
-	_ "github.com/xgfone/go-apigateway/http/middleware/middlewares/cors"
-	_ "github.com/xgfone/go-apigateway/http/middleware/middlewares/processor"
-	_ "github.com/xgfone/go-apigateway/http/middleware/middlewares/redirect"
-)
+import "github.com/xgfone/go-apigateway/http/core"
+
+func init() {
+	DefaultRegistry.RegisterOneArg("setmethod", "string: change the method of the request",
+		func(c *core.Context, s string) { c.UpstreamRequest.Method = s },
+	)
+}

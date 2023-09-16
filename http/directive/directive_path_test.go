@@ -12,13 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package middlewares is used to register the builtin middlewares.
-package middlewares
+package directive
 
 import (
-	_ "github.com/xgfone/go-apigateway/http/middleware/middlewares/allow"
-	_ "github.com/xgfone/go-apigateway/http/middleware/middlewares/block"
-	_ "github.com/xgfone/go-apigateway/http/middleware/middlewares/cors"
-	_ "github.com/xgfone/go-apigateway/http/middleware/middlewares/processor"
-	_ "github.com/xgfone/go-apigateway/http/middleware/middlewares/redirect"
+	"net/http"
+	"net/url"
+	"testing"
+
+	"github.com/xgfone/go-apigateway/http/core"
 )
+
+func TestRewrite(t *testing.T) {
+	origin := "/prefix/path/suffix"
+	expect := "/prefix/suffix/path"
+
+	p, err := DefaultRegistry.Build("rewrite", "/prefix(.*)/suffix", "/prefix/suffix$1")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req := &http.Request{URL: &url.URL{Path: origin}}
+	c := core.AcquireContext(req.Context())
+	c.UpstreamRequest = req
+	p.Process(c)
+
+	if req.URL.Path != expect {
+		t.Errorf("expect path '%s', but got '%s'", expect, req.URL.Path)
+	}
+}
