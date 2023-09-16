@@ -34,7 +34,9 @@
                 ]
             }
         ],
-        "middlewareGroup": "onlydeny127"
+        "middlewareGroups": [
+            "onlydeny127"
+        ]
     },
     {
         "id": "route3",

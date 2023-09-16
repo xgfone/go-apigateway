@@ -39,7 +39,7 @@ func buildMiddlewaresHandler(ms Middlewares, next core.Handler) (core.Handler, e
 	return _ms.Handler(next), err
 }
 
-func buildMiddlewareGroupsHandler(group string, next core.Handler) (core.Handler, error) {
+func buildMiddlewareGroupHandler(group string, next core.Handler) (core.Handler, error) {
 	if group == "" {
 		return next, nil
 	}
@@ -59,9 +59,12 @@ func (r HttpRoute) Build() (router.Route, error) {
 		return router.Route{}, err
 	}
 
-	handler, err := buildMiddlewareGroupsHandler(r.MiddlewareGroup, router.AfterRoute)
-	if err != nil {
-		return router.Route{}, err
+	handler := router.AfterRoute
+	for _len := len(r.MiddlewareGroups) - 1; _len >= 0; _len-- {
+		handler, err = buildMiddlewareGroupHandler(r.MiddlewareGroups[_len], handler)
+		if err != nil {
+			return router.Route{}, err
+		}
 	}
 
 	handler, err = buildMiddlewaresHandler(r.Middlewares, handler)

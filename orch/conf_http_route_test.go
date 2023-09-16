@@ -26,9 +26,9 @@ var (
 		Id:       "route1",
 		Upstream: "upstream",
 
-		Priority:        123,
-		RequestTimeout:  time.Second,
-		MiddlewareGroup: "group",
+		Priority:         123,
+		RequestTimeout:   time.Second,
+		MiddlewareGroups: []string{"group"},
 		Middlewares: Middlewares{
 			{Name: "allow", Conf: "127.0.0.1/8"},
 			{Name: "block", Conf: map[string]any{"cidrs": []string{"0.0.0.0/0"}}},
@@ -52,9 +52,9 @@ var (
 		Id:       "route2",
 		Upstream: "upstream",
 
-		Priority:        123,
-		RequestTimeout:  time.Second,
-		MiddlewareGroup: "group",
+		Priority:         123,
+		RequestTimeout:   time.Second,
+		MiddlewareGroups: []string{"group"},
 		Middlewares: Middlewares{
 			{Name: "allow", Conf: "127.0.0.1/8"},
 			{Name: "block", Conf: map[string]any{"cidrs": []string{"0.0.0.0/0"}}},

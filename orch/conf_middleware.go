@@ -40,11 +40,6 @@ type MiddlewareGroup struct {
 	Middlewares Middlewares `json:"middlewares,omitempty" yaml:"middlewares,omitempty"`
 }
 
-// // MiddlewareGroups is a set of middleware groups.
-// type MiddlewareGroups []MiddlewareGroup
-
-// ------------------------------------------------------------------------ //
-
 // Equal reports whether it is equal to other middlewares.
 func (g MiddlewareGroup) Equal(other MiddlewareGroup) bool {
 	return reflect.DeepEqual(g, other)

@@ -35,8 +35,8 @@ type HttpRoute struct {
 	RequestTimeout time.Duration `json:"requestTimeout,omitempty" yaml:"requestTimeout,omitempty"`
 	ForwardTimeout time.Duration `json:"forwardTimeout,omitempty" yaml:"forwardTimeout,omitempty"`
 
-	Middlewares     Middlewares `json:"middlewares,omitempty" yaml:"middlewares,omitempty"`
-	MiddlewareGroup string      `json:"middlewareGroup,omitempty" yaml:"middlewareGroup,omitempty"`
+	Middlewares      Middlewares `json:"middlewares,omitempty" yaml:"middlewares,omitempty"`
+	MiddlewareGroups []string    `json:"middlewareGroups,omitempty" yaml:"middlewareGroups,omitempty"`
 }
 
 // HttpRouteMatcher is the configuraiton of a route matcher.
