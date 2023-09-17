@@ -41,6 +41,8 @@ func replace(groups []string, a slog.Attr) slog.Attr {
 		if src, ok := a.Value.Any().(*slog.Source); ok {
 			a.Value = slog.StringValue(fmt.Sprintf("%s:%d", defaults.TrimPkgFile(src.File), src.Line))
 		}
+	case a.Value.Kind() == slog.KindDuration:
+		a.Value = slog.StringValue(a.Value.Duration().String())
 	}
 	return a
 }
