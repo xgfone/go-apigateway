@@ -24,14 +24,6 @@ import (
 	"github.com/xgfone/go-defaults"
 )
 
-var (
-	// DebugLogLogger is a log.Logger to log the DEBUG message.
-	DebugLogLogger = slog.NewLogLogger(slog.Default().Handler(), slog.LevelDebug)
-
-	// ErrorLogLogger is a log.Logger to log the ERROR message.
-	ErrorLogLogger = slog.NewLogLogger(slog.Default().Handler(), slog.LevelError)
-)
-
 // Level is the log level, which can be changed to adjust the level
 // of the logger that uses it.
 var Level = new(slog.LevelVar)

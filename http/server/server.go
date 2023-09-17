@@ -17,12 +17,12 @@ package server
 
 import (
 	"context"
+	"log"
 	"log/slog"
 	"net"
 	"net/http"
 	"time"
 
-	"github.com/xgfone/go-apigateway/logger"
 	"github.com/xgfone/go-apigateway/nets"
 )
 
@@ -38,10 +38,14 @@ func New(addr string, handler http.Handler) *http.Server {
 		IdleTimeout:       time.Minute * 3,
 		ReadHeaderTimeout: time.Second * 3,
 
-		ErrorLog:    logger.ErrorLogLogger,
+		ErrorLog:    errorLogger(),
 		BaseContext: baseContext,
 		ConnContext: connContext,
 	}
+}
+
+func errorLogger() *log.Logger {
+	return slog.NewLogLogger(slog.Default().Handler(), slog.LevelError)
 }
 
 func baseContext(ln net.Listener) context.Context {
