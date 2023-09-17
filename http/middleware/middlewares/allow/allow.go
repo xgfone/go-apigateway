@@ -41,7 +41,7 @@ func init() {
 			for i, v := range vs {
 				cidrs[i], ok = v.(string)
 				if !ok {
-					return nil, fmt.Errorf("Middleware<allow>: expect a string, but got %T", v)
+					return nil, fmt.Errorf("Middleware<%s>: expect a string, but got %T", name, v)
 				}
 			}
 
@@ -50,12 +50,12 @@ func init() {
 				Cidrs []string `json:"cidrs"`
 			}
 			if err := binder.BindStructToMap(&arg, "json", vs); err != nil {
-				return nil, err
+				return nil, fmt.Errorf("Middleware<%s>: %w", name, err)
 			}
 			cidrs = arg.Cidrs
 
 		default:
-			return nil, fmt.Errorf("Middleware<allow>: unsupported config type %T", conf)
+			return nil, fmt.Errorf("Middleware<%s>: unsupported config type %T", name, conf)
 		}
 
 		return Allow(cidrs...)

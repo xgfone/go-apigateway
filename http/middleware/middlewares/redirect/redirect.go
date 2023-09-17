@@ -16,32 +16,18 @@
 package redirect
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/xgfone/go-apigateway/http/core"
 	"github.com/xgfone/go-apigateway/http/middleware"
-	"github.com/xgfone/go-binder"
 )
 
 func init() {
 	middleware.DefaultRegistry.Register("redirect", func(name string, conf any) (middleware.Middleware, error) {
-		var err error
 		var config Config
-		switch c := conf.(type) {
-		case map[string]any:
-			err = binder.BindStructToMap(&config, "json", c)
-		case []byte:
-			err = json.Unmarshal(c, &config)
-		case json.RawMessage:
-			err = json.Unmarshal(c, &config)
-		default:
-			err = fmt.Errorf("Middleware<redirect>: unsupported config type %T", conf)
-		}
-
-		if err != nil {
+		if err := middleware.BindConf(name, &config, conf); err != nil {
 			return nil, err
 		}
 		return Redirect(config)

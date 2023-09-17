@@ -17,25 +17,17 @@
 package processor
 
 import (
-	"fmt"
-
 	"github.com/xgfone/go-apigateway/http/core"
 	"github.com/xgfone/go-apigateway/http/directive"
 	"github.com/xgfone/go-apigateway/http/middleware"
-	"github.com/xgfone/go-binder"
 )
 
 func init() {
 	middleware.DefaultRegistry.Register("processor", func(name string, conf any) (middleware.Middleware, error) {
-		ms, ok := conf.(map[string]any)
-		if !ok {
-			return nil, fmt.Errorf("expect a map type, but got %T", conf)
-		}
-
 		var arg struct {
 			Directives [][]string `json:"directives"`
 		}
-		if err := binder.BindStructToMap(&arg, "json", ms); err != nil {
+		if err := middleware.BindConf(name, &arg, conf); err != nil {
 			return nil, err
 		}
 

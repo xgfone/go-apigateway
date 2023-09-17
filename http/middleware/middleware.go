@@ -16,8 +16,12 @@
 package middleware
 
 import (
+	"encoding/json"
+	"fmt"
+
 	"github.com/xgfone/go-apigateway/http/core"
 	"github.com/xgfone/go-apigateway/registry"
+	"github.com/xgfone/go-binder"
 )
 
 // DefaultRegistry is the global default registry of the middleware builder.
@@ -70,4 +74,34 @@ func (ms Middlewares) Handler(handler core.Handler) core.Handler {
 		handler = ms[_len].Handler(handler)
 	}
 	return handler
+}
+
+// ------------------------------------------------------------------------ //
+
+// BindConf builds the config dstconf of the middleware named name from srcconf.
+//
+// scrconf may be one of types as follow:
+//   - map[string]any
+//   - json.RawMessage
+//   - []byte
+func BindConf(name string, dstconf, srcconf any) (err error) {
+	switch v := srcconf.(type) {
+	case map[string]any:
+		err = binder.BindStructToMap(dstconf, "json", v)
+
+	case []byte:
+		err = json.Unmarshal(v, dstconf)
+
+	case json.RawMessage:
+		err = json.Unmarshal(v, dstconf)
+
+	default:
+		return fmt.Errorf("Middleware<%s>: expect a map type, but got %T", name, srcconf)
+	}
+
+	if err != nil {
+		err = fmt.Errorf("Middleware<%s>: %w", name, err)
+	}
+
+	return
 }

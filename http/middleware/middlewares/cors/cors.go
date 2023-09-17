@@ -22,18 +22,12 @@ import (
 
 	"github.com/xgfone/go-apigateway/http/core"
 	"github.com/xgfone/go-apigateway/http/middleware"
-	"github.com/xgfone/go-binder"
 )
 
 func init() {
 	middleware.DefaultRegistry.Register("cors", func(name string, conf any) (middleware.Middleware, error) {
-		ms, ok := conf.(map[string]any)
-		if !ok {
-			return nil, fmt.Errorf("expect a map type, but got %T", conf)
-		}
-
 		var config Config
-		if err := binder.BindStructToMap(&config, "json", ms); err != nil {
+		if err := middleware.BindConf(name, &config, conf); err != nil {
 			return nil, err
 		}
 		return CORS(config), nil
