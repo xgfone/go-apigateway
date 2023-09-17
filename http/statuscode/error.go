@@ -70,6 +70,9 @@ func (e Error) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // StatusCode returns the error status code.
 func (e Error) StatusCode() int { return e.Code }
 
+// Unwrap returns the wrapped error.
+func (e Error) Unwrap() error { return e.Err }
+
 // WithError returns a new Error with the new error.
 func (e Error) WithError(err error) Error {
 	e.Err = err
