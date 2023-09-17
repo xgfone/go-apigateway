@@ -20,8 +20,7 @@ import "github.com/xgfone/go-loadbalancer"
 func NewDiscovery(eps ...loadbalancer.Endpoint) loadbalancer.Discovery {
 	static := loadbalancer.None
 	if len(eps) > 0 {
-		static = loadbalancer.Acquire(len(eps))
-		static.Append(eps...)
+		static = loadbalancer.NewStatic(eps)
 	}
 	return static
 }

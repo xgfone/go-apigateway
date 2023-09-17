@@ -28,17 +28,11 @@ import (
 
 	"github.com/xgfone/go-apigateway/http/core"
 	"github.com/xgfone/go-apigateway/http/statuscode"
-	"github.com/xgfone/go-atomicvalue"
 	"github.com/xgfone/go-defaults"
 )
 
 // DefaultRouter is the default global http router.
 var DefaultRouter = New()
-
-var (
-	routemappool   = &sync.Pool{New: func() any { return make(map[string]Route, 128) }}
-	routeslicepool = &sync.Pool{New: func() any { return &routeswrapper{make([]Route, 0, 128)} }}
-)
 
 type routeswrapper struct{ Routes []Route }
 
@@ -48,16 +42,16 @@ type Router struct {
 	lock   sync.Mutex
 	routem map[string]Route
 
-	allmap atomicvalue.Value[map[string]Route]
-	routes atomicvalue.Value[*routeswrapper]
+	allmap atomic.Value // map[string]Route
+	routes atomic.Pointer[routeswrapper]
 	notlog atomic.Bool
 }
 
 // New returns a new router.
 func New() *Router {
 	r := &Router{routem: make(map[string]Route, 32)}
-	r.allmap.Store(routemappool.Get().(map[string]Route))
-	r.routes.Store(routeslicepool.Get().(*routeswrapper))
+	r.allmap.Store(map[string]Route(nil))
+	r.routes.Store(new(routeswrapper))
 	return r
 }
 
@@ -125,7 +119,7 @@ func (r *Router) DelRoutesByIds(ids ...string) {
 
 // GetRoute returns the route by the route id.
 func (r *Router) GetRoute(id string) (Route, bool) {
-	route, ok := r.allmap.Load()[id]
+	route, ok := r.allmap.Load().(map[string]Route)[id]
 	return route, ok
 }
 
@@ -133,20 +127,14 @@ func (r *Router) GetRoute(id string) (Route, bool) {
 func (r *Router) Routes() []Route { return r.routes.Load().Routes }
 
 func (r *Router) updateroutes() {
-	routes := routeslicepool.Get().(*routeswrapper)
+	routes := &routeswrapper{Routes: make([]Route, 0, len(r.routem))}
 	for _, route := range r.routem {
 		routes.Routes = append(routes.Routes, route)
 	}
 	sortroutes(routes.Routes)
 
-	oldroutes := r.routes.Swap(routes)
-	clear(oldroutes.Routes)
-	oldroutes.Routes = oldroutes.Routes[:0]
-	routeslicepool.Put(oldroutes)
-
-	oldroutem := r.allmap.Swap(maps.Clone(r.routem))
-	clear(oldroutem)
-	routemappool.Put(oldroutem)
+	r.routes.Store(routes)
+	r.allmap.Store(maps.Clone(r.routem))
 }
 
 func sortroutes(routes []Route) {
