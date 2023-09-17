@@ -22,7 +22,23 @@ import (
 
 	"github.com/xgfone/go-apigateway/http/core"
 	"github.com/xgfone/go-apigateway/http/middleware"
+	"github.com/xgfone/go-binder"
 )
+
+func init() {
+	middleware.DefaultRegistry.Register("cors", func(name string, conf any) (middleware.Middleware, error) {
+		ms, ok := conf.(map[string]any)
+		if !ok {
+			return nil, fmt.Errorf("expect a map type, but got %T", conf)
+		}
+
+		var config Config
+		if err := binder.BindStructToMap(&config, "json", ms); err != nil {
+			return nil, err
+		}
+		return CORS(config), nil
+	})
+}
 
 // DefaultAllowMethods is the default allowed methods,
 // which is set as the value of the http header "Access-Control-Allow-Methods".
