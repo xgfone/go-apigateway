@@ -74,7 +74,6 @@ func (c authconfig) handle(_type, value string, header http.Header) (err error) 
 			err = errInvalidAuth
 		} else if len(infos) > 0 {
 			maps.Copy(header, infos)
-		} else {
 		}
 	}
 
