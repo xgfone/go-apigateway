@@ -1,8 +1,0 @@
-github.com/google/go-cmp v0.5.8/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
-github.com/xgfone/go-atexit v0.11.0 h1:hpN7aowCWUUjy00SciUxrFTnpbK9JlJwV01zlRUel0o=
-github.com/xgfone/go-atexit v0.11.0/go.mod h1:yN4Hf2wE06X4kJLL2qxBNKuJHTRdDRoifivfFoKdC8o=
-github.com/xgfone/go-checker v0.3.0/go.mod h1:HNkJUfk+bHfGLsI5PnnX3dYrS6aD+eMkcQDLjP2iWrU=
-github.com/xgfone/go-http-matcher v0.1.0 h1:wfvk4od9SOFnYTzfyiEdqBlbuTTBxrZfMYIRV5/50Hw=
-github.com/xgfone/go-http-matcher v0.1.0/go.mod h1:fPetvyIHNJiyAxt6MwVz8pFfHFpm+34KhlpdvZU9/HQ=
-golang.org/x/mod v0.6.0/go.mod h1:4mET923SAdbXp2ki8ey+zGs1SLqsuM2Y0uvdZR/fUNI=
-golang.org/x/tools v0.2.0/go.mod h1:y4OqIKeOV/fWJetJ8bXPU1sEVniLMIyDAZWeHdV+NTA=
