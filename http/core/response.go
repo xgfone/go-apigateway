@@ -48,7 +48,6 @@ type ResponseWriter interface {
 	http.ResponseWriter
 	WroteHeader() bool
 	StatusCode() int
-	Written() int
 }
 
 // Responser is used to handle the response from the upstream server to the client.

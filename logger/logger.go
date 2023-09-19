@@ -16,36 +16,10 @@
 package logger
 
 import (
-	"fmt"
-	"io"
 	"log/slog"
 
-	"github.com/xgfone/go-apigateway/osx"
 	"github.com/xgfone/go-defaults"
 )
 
-// Level is the log level, which can be changed to adjust the level
-// of the logger that uses it.
-var Level = new(slog.LevelVar)
-
-// NewJSONHandler returns a new log handler based on JSON,
-// which will use Level as the handler level.
-func NewJSONHandler(w io.Writer) slog.Handler {
-	o := slog.HandlerOptions{ReplaceAttr: replace, AddSource: true, Level: Level}
-	return slog.NewJSONHandler(w, &o)
-}
-
-func replace(groups []string, a slog.Attr) slog.Attr {
-	switch {
-	case a.Key == slog.SourceKey:
-		if src, ok := a.Value.Any().(*slog.Source); ok {
-			a.Value = slog.StringValue(fmt.Sprintf("%s:%d", defaults.TrimPkgFile(src.File), src.Line))
-		}
-	case a.Value.Kind() == slog.KindDuration:
-		a.Value = slog.StringValue(a.Value.Duration().String())
-	}
-	return a
-}
-
-// Fatal emits the log message with the ERROR level, and call osx.Exit(1).
-func Fatal(msg string, args ...any) { slog.Error(msg, args...); osx.Exit(1) }
+// Fatal emits the log message with the ERROR level, and call os.Exit(1).
+func Fatal(msg string, args ...any) { slog.Error(msg, args...); defaults.Exit(1) }

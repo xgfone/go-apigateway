@@ -221,7 +221,7 @@ func (r *Router) serveRoute(c *core.Context) (matched bool) {
 			break
 		}
 
-		if matched = route.Match(c); matched {
+		if matched = route.Match(c.ClientRequest); matched {
 			c.RouteId = route.RouteId
 			c.UpstreamId = route.UpstreamId
 			c.Responser = route.Responser

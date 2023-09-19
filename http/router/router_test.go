@@ -58,9 +58,7 @@ func TestRouter(t *testing.T) {
 	}
 
 	newMatcher := func(path string) MatcherFunc {
-		return func(c *core.Context) bool {
-			return c.ClientRequest.URL.Path == path
-		}
+		return func(r *http.Request) bool { return r.URL.Path == path }
 	}
 
 	route1 := Route{

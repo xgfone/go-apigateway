@@ -55,7 +55,6 @@ func (r *Router) log(c *core.Context, start time.Time, matched bool) {
 	logattrs.Append(
 		slog.String("cost", cost.String()),
 		slog.Int("code", c.ClientResponse.StatusCode()),
-		slog.Int("resplen", c.ClientResponse.Written()),
 	)
 
 	switch e := c.Error.(type) {

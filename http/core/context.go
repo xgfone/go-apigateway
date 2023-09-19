@@ -168,7 +168,7 @@ func (c *Context) ClientIP() netip.Addr {
 		return assists.ConvertAddr(conn.RemoteAddr())
 	}
 
-	addr, _ := netip.ParseAddr(assists.TrimIP(c.ClientRequest.RemoteAddr))
+	addr, _ := netip.ParseAddr(assists.TrimPort(c.ClientRequest.RemoteAddr))
 	return addr
 }
 

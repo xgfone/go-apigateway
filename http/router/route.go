@@ -15,6 +15,7 @@
 package router
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/xgfone/go-apigateway/http/core"
@@ -26,22 +27,24 @@ var AfterRoute core.Handler = upstream.Forward
 
 var (
 	// AlwaysTrue is a route matcher that always reutrns true.
-	AlwaysTrue = MatcherFunc(func(c *core.Context) bool { return true })
+	AlwaysTrue = MatcherFunc(func(*http.Request) bool { return true })
 
 	// AlwaysFalse is a route matcher that always reutrns false.
-	AlwaysFalse = MatcherFunc(func(c *core.Context) bool { return false })
+	AlwaysFalse = MatcherFunc(func(*http.Request) bool { return false })
 )
+
+var _ Matcher = MatcherFunc(nil)
 
 // Matcher is used to check whether the rule matches the request.
 type Matcher interface {
-	Match(*core.Context) bool
+	Match(*http.Request) bool
 }
 
 // MatcherFunc is a route matcher function.
-type MatcherFunc func(c *core.Context) bool
+type MatcherFunc func(r *http.Request) bool
 
 // Match implements the interface Matcher.
-func (f MatcherFunc) Match(c *core.Context) bool { return f(c) }
+func (f MatcherFunc) Match(r *http.Request) bool { return f(r) }
 
 // Route represents a runtime route.
 type Route struct {
