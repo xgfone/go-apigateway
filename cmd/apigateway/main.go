@@ -15,12 +15,15 @@
 package main
 
 import (
+	"context"
 	"flag"
+	"log/slog"
 	"net"
 	"net/http"
+	"time"
 
 	"github.com/xgfone/go-apigateway/http/router"
-	"github.com/xgfone/go-apigateway/http/server"
+	"github.com/xgfone/go-apigateway/nets"
 	"github.com/xgfone/go-atexit"
 	"github.com/xgfone/go-atexit/signal"
 	"github.com/xgfone/go-defaults"
@@ -41,13 +44,38 @@ func main() {
 }
 
 func startserver(addr string, handler http.Handler, trytls bool) {
-	svr := server.New(addr, handler)
-	svr.RegisterOnShutdown(atexit.Execute)
-	atexit.OnExit(func() { server.Stop(svr) })
-
-	var cb func(net.Listener) net.Listener
-	if trytls {
-		cb = tryTLSListener
+	ln, err := net.Listen("tcp", addr)
+	if err != nil {
+		slog.Error("fail to open the listener on the address",
+			"protocol", "tcp", "addr", addr, "err", err)
+		return
 	}
-	server.StartWithListenerCallback(svr, cb)
+	if trytls {
+		ln = tryTLSListener(ln)
+	}
+
+	svr := &http.Server{
+		Addr:    addr,
+		Handler: handler,
+
+		IdleTimeout:       time.Minute * 3,
+		ReadHeaderTimeout: time.Second * 3,
+
+		ErrorLog:    slog.NewLogLogger(slog.Default().Handler(), slog.LevelError),
+		BaseContext: baseContext,
+		ConnContext: connContext,
+	}
+
+	atexit.OnExit(func() { _ = svr.Shutdown(context.Background()) })
+	slog.Info("start the http server", "addr", addr)
+	defer slog.Info("stop the http server", "addr", addr)
+	_ = svr.Serve(ln)
+}
+
+func baseContext(ln net.Listener) context.Context {
+	return nets.SetListenerIntoContext(context.Background(), ln)
+}
+
+func connContext(ctx context.Context, conn net.Conn) context.Context {
+	return nets.SetConnIntoContext(ctx, conn)
 }
