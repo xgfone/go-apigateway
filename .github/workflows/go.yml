@@ -7,15 +7,11 @@ jobs:
     strategy:
       matrix:
         go:
-        - '1.21.x'
+        - '1.21'
     steps:
     - uses: actions/checkout@v3
     - name: Setup Go
       uses: actions/setup-go@v3
       with:
         go-version: ${{ matrix.go }}
-    - run: |
-        mkdir -p /tmp/src/github.com/xgfone/go-apigateway
-        cp -r ./* /tmp/src/github.com/xgfone/go-apigateway
-        cd /tmp/src/github.com/xgfone/go-apigateway
-        go test -cover -race ./...
+    - run: go test -cover -race ./...
