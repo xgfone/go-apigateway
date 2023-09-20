@@ -42,7 +42,7 @@ func newTransport() *http.Transport {
 	t.DialContext = dialContext
 	t.MaxIdleConns = 0
 	t.MaxIdleConnsPerHost = 100
-	t.TLSHandshakeTimeout = time.Second * 3
+	t.TLSHandshakeTimeout = time.Second * 2
 	// t.IdleConnTimeout = time.Second * 90
 	return t
 }
