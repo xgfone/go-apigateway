@@ -69,7 +69,12 @@ type Route struct {
 	// Optional
 	//
 	// The original configuration of the route.
-	Config interface{} `json:"config,omitempty" yaml:"config,omitempty"`
+	Config any `json:"config,omitempty" yaml:"config,omitempty"`
+
+	// Optional
+	//
+	// Extra is the extra route information.
+	Extra any `json:"-" yaml:"-"`
 
 	// Optional
 	//

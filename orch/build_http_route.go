@@ -72,6 +72,9 @@ func (r HttpRoute) Build() (router.Route, error) {
 		return router.Route{}, err
 	}
 
+	extra := r.Extra
+	r.Extra = nil
+
 	priority := r.Priority + matcher.Priority()
 	return router.Route{
 		Priority:   priority,
@@ -79,6 +82,7 @@ func (r HttpRoute) Build() (router.Route, error) {
 		Protect:    r.Protect,
 		RouteId:    r.Id,
 		Config:     r,
+		Extra:      extra,
 
 		RequestTimeout: r.RequestTimeout,
 		ForwardTimeout: r.ForwardTimeout,

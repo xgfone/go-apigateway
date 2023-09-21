@@ -37,6 +37,8 @@ type HttpRoute struct {
 
 	Middlewares      Middlewares `json:"middlewares,omitempty" yaml:"middlewares,omitempty"`
 	MiddlewareGroups []string    `json:"middlewareGroups,omitempty" yaml:"middlewareGroups,omitempty"`
+
+	Extra any `json:"extra,omitempty" yaml:"extra,omitempty"`
 }
 
 // HttpRouteMatcher is the configuraiton of a route matcher.
