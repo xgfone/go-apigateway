@@ -21,7 +21,6 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/xgfone/go-apigateway/logger"
 	"github.com/xgfone/go-defaults"
 )
 
@@ -33,7 +32,8 @@ var level = new(slog.LevelVar)
 
 func initlogging() {
 	if err := level.UnmarshalText([]byte(*loglevel)); err != nil {
-		logger.Fatal("fail to parse the log level", "level", *loglevel, "err", err)
+		slog.Error("fail to parse the log level", "level", *loglevel, "err", err)
+		defaults.Exit(1)
 	}
 	slog.SetDefault(slog.New(newJSONHandler(os.Stderr)))
 }
@@ -51,8 +51,6 @@ func replace(groups []string, a slog.Attr) slog.Attr {
 		if src, ok := a.Value.Any().(*slog.Source); ok {
 			a.Value = slog.StringValue(fmt.Sprintf("%s:%d", defaults.TrimPkgFile(src.File), src.Line))
 		}
-	case a.Value.Kind() == slog.KindDuration:
-		a.Value = slog.StringValue(a.Value.Duration().String())
 	}
 	return a
 }

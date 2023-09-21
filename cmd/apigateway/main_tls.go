@@ -19,14 +19,15 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"log/slog"
 	"net"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/xgfone/go-apigateway/logger"
 	"github.com/xgfone/go-atexit"
+	"github.com/xgfone/go-defaults"
 	"github.com/xgfone/go-tlsx"
 )
 
@@ -98,14 +99,16 @@ func getTLSCertFiles(certfile, keyfile, jsonfile string) (files []keycertfile) {
 	if jsonfile != "" {
 		data, err := os.ReadFile(jsonfile)
 		if err != nil {
-			logger.Fatal("fail to read the tls json config file", "file", jsonfile, "err", err)
+			slog.Error("fail to read the tls json config file", "file", jsonfile, "err", err)
+			defaults.Exit(1)
 		}
 
 		if len(data) > 0 {
 			if len(data) > 0 {
 				var results []keycertfile
 				if err := json.Unmarshal(data, &results); err != nil {
-					logger.Fatal("fail to parse the tls json config file", "file", jsonfile, "err", err)
+					slog.Error("fail to parse the tls json config file", "file", jsonfile, "err", err)
+					defaults.Exit(1)
 				}
 				files = append(files, results...)
 			}

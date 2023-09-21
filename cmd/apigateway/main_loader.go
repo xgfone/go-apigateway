@@ -45,18 +45,29 @@ func initloader() {
 	interval := *localfiledirinterval
 	upstreamsch := make(chan []orch.Upstream)
 	upstreamsloader = dirloader.New[orch.Upstream](*upstreamslocaldir)
-	go upstreamsloader.Sync(atexit.Context(), "upstreams", interval, reloadconf, upstreamsch, updateUpstreams)
 	go updater.SyncUpstreams(atexit.Context(), upstreamsch)
+	go upstreamsloader.Sync(atexit.Context(), "upstreams", interval, reloadconf, func(ups []orch.Upstream) (changed bool) {
+		changed = updateUpstreams(ups)
+		upstreamsch <- ups
+		return
+	})
 
 	httproutesch := make(chan []orch.HttpRoute)
 	httproutesloader = dirloader.New[orch.HttpRoute](*httprouteslocaldir)
-	go httproutesloader.Sync(atexit.Context(), "httproutes", interval, reloadconf, httproutesch, updateHttpRoutes)
 	go updater.SyncHttpRoutes(atexit.Context(), httproutesch)
+	go httproutesloader.Sync(atexit.Context(), "httproutes", interval, reloadconf, func(routes []orch.HttpRoute) (changed bool) {
+		changed = updateHttpRoutes(routes)
+		httproutesch <- routes
+		return
+	})
 
 	httpmwgroupsch := make(chan []orch.MiddlewareGroup)
 	httpmwgroupsloader = dirloader.New[orch.MiddlewareGroup](*httpmwgroupslocaldir)
-	go httpmwgroupsloader.Sync(atexit.Context(), "httpmiddlewaregroups", interval, reloadconf, httpmwgroupsch, nil)
 	go updater.SyncHttpMiddlewareGroups(atexit.Context(), httpmwgroupsch)
+	go httpmwgroupsloader.Sync(atexit.Context(), "httpmiddlewaregroups", interval, reloadconf, func(groups []orch.MiddlewareGroup) bool {
+		httpmwgroupsch <- groups
+		return false
+	})
 }
 
 func updateUpstreams(ups []orch.Upstream) (changed bool) {
