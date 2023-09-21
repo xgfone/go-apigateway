@@ -24,6 +24,8 @@ import (
 
 // Pre-define some errors with the status code.
 var (
+	ErrMissingContentType = NewError(http.StatusBadRequest).WithMessage("missing the header Content-Type")
+
 	ErrBadRequest           = NewError(http.StatusBadRequest)           // 400
 	ErrUnauthorized         = NewError(http.StatusUnauthorized)         // 401
 	ErrForbidden            = NewError(http.StatusForbidden)            // 403
