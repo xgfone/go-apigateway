@@ -16,10 +16,13 @@ package upstream
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/xgfone/go-apigateway/http/core"
 	"github.com/xgfone/go-apigateway/upstream"
+	"github.com/xgfone/go-defaults"
 )
 
 // Forward forwards the http request by the upstream.
@@ -64,9 +67,45 @@ func Forward(c *core.Context) {
 		return
 	}
 
+	start := time.Now()
+
 	var resp interface{}
 	resp, c.Error = up.Serve(c.UpstreamRequest.Context(), c)
 	if resp != nil {
 		c.UpstreamResponse = resp.(*http.Response)
+	}
+
+	_log(c, up.Balancer().Policy(), time.Since(start), c.Error)
+}
+
+func _log(c *core.Context, policy string, cost time.Duration, err error) {
+	req := c.UpstreamRequest
+	if err != nil {
+		slog.Error("fail to forward the http request",
+			slog.String("reqid", defaults.GetRequestID(c.Context, req)),
+			slog.String("upstream", c.UpstreamId),
+			slog.String("balancer", policy),
+			slog.String("method", req.Method),
+			slog.String("hostname", req.Host),
+			slog.String("host", req.URL.Host),
+			slog.String("path", req.URL.Path),
+			slog.String("query", req.URL.RawQuery),
+			slog.String("cost", cost.String()),
+			slog.Any("header", req.Header),
+			slog.String("err", err.Error()),
+		)
+	} else if slog.Default().Enabled(c.Context, slog.LevelDebug) {
+		slog.Debug("forward the http request",
+			slog.String("reqid", defaults.GetRequestID(c.Context, req)),
+			slog.String("upstream", c.UpstreamId),
+			slog.String("balancer", policy),
+			slog.String("method", req.Method),
+			slog.String("hostname", req.Host),
+			slog.String("host", req.URL.Host),
+			slog.String("path", req.URL.Path),
+			slog.String("query", req.URL.RawQuery),
+			slog.String("cost", cost.String()),
+			slog.Any("header", req.Header),
+		)
 	}
 }
