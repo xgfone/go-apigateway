@@ -29,12 +29,7 @@ import (
 	"github.com/xgfone/go-loadbalancer"
 )
 
-var ctxpool = &sync.Pool{New: func() any {
-	return &Context{
-		forwards:    make([]func(), 0, 4),
-		respheaders: make([]func(), 0, 4),
-	}
-}}
+var ctxpool = &sync.Pool{New: func() any { return NewContext() }}
 
 // AcquireContext acquires a context from the pool.
 func AcquireContext(ctx context.Context) *Context {
@@ -70,8 +65,9 @@ type Context struct {
 	Endpoint         loadbalancer.Endpoint // Set by the endpoint
 
 	IsAborted bool
-	Error     error       // Set when aborting the context process anytime.
-	Data      interface{} // The contex data that is set and used by the final user.
+	Error     error          // Set when aborting the context process anytime.
+	Data      interface{}    // The contex data that is set and used by the final user.
+	Kvs       map[string]any // The interim context key-value cache.
 
 	// Cache to avoid to parse them twice.
 	queries url.Values
@@ -82,13 +78,22 @@ type Context struct {
 	respheaders []func()
 }
 
+func NewContext() *Context {
+	return &Context{
+		Kvs:         make(map[string]any, 4),
+		forwards:    make([]func(), 0, 4),
+		respheaders: make([]func(), 0, 4),
+	}
+}
+
 // ------------------------------------------------------------------------- //
 
 // Reset resets the context to the initial state.
 func (c *Context) Reset() {
+	clear(c.Kvs)
 	clear(c.forwards)
 	clear(c.respheaders)
-	*c = Context{forwards: c.forwards[:0], respheaders: c.respheaders[:0]}
+	*c = Context{Kvs: c.Kvs, forwards: c.forwards[:0], respheaders: c.respheaders[:0]}
 }
 
 // Abort sets the error informaion and aborts the context process.

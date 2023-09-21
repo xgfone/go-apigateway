@@ -15,7 +15,11 @@
 // Package directive provides a request or response processor based on the directive.
 package directive
 
-import "github.com/xgfone/go-apigateway/http/core"
+import (
+	"fmt"
+
+	"github.com/xgfone/go-apigateway/http/core"
+)
 
 // GetHeaderValue is used to get the value of the header by the key.
 var GetHeaderValue = getHeaderValue
@@ -48,8 +52,14 @@ func QueryVariable(c *core.Context, variable string) (value string, isvar bool) 
 
 	case '$': // May be one of Query, Header, or others,
 		variable = variable[1:]
-		// 1. Path Argument
-		// TODO:
+
+		// 1. Context Kvs
+		if v, ok := c.Kvs[variable]; ok {
+			if value, ok = v.(string); !ok {
+				value = fmt.Sprint(v)
+			}
+			return
+		}
 
 		// 2. Query
 		if value = c.Queries().Get(variable); value != "" {
