@@ -75,13 +75,9 @@ func New[T any](dir string) *DirLoader[T] {
 }
 
 // Sync is used to synchronize the resources to the chan ch periodically.
-func (l *DirLoader[T]) Sync(ctx context.Context, rsctype string, interval time.Duration, reload <-chan struct{}, ch chan<- []T, fix func([]T) (changed bool)) {
+func (l *DirLoader[T]) Sync(ctx context.Context, rsctype string, interval time.Duration, reload <-chan struct{}, cb func([]T) (changed bool)) {
 	if interval <= 0 {
 		interval = time.Minute
-	}
-
-	if fix == nil {
-		fix = func([]T) bool { return false }
 	}
 
 	ticker := time.NewTicker(interval)
@@ -102,11 +98,10 @@ func (l *DirLoader[T]) Sync(ctx context.Context, rsctype string, interval time.D
 			return
 		}
 
-		if fix(resources) {
+		if cb(resources) {
 			l.SetResource(resources)
 		}
 
-		ch <- resources
 		lastEtag = etag
 	}
 
