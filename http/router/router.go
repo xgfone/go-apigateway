@@ -199,6 +199,7 @@ func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 func (r *Router) serveHTTP(c *core.Context) {
 	start := time.Now()
 
+	defer closeResponse(c)
 	matched := r.serveRoute(c)
 	if !matched {
 		c.Error = statuscode.ErrNotFound
@@ -253,5 +254,11 @@ func wrappanic(c *core.Context) {
 		} else {
 			c.Abort(fmt.Errorf("panic: %v", r))
 		}
+	}
+}
+
+func closeResponse(c *core.Context) {
+	if c.UpstreamResponse != nil {
+		c.UpstreamResponse.Body.Close()
 	}
 }
