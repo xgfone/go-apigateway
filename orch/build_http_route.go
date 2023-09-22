@@ -23,6 +23,13 @@ import (
 	"github.com/xgfone/go-apigateway/http/router"
 )
 
+// BuildHttpRouteResponser is used to build a responser of the http route.
+//
+// If not set or return nil, use core.StdResponse instead.
+//
+// Default: nil
+var BuildHttpRouteResponser func(r HttpRoute) (core.Responser, error)
+
 func buildMiddlewaresHandler(ms Middlewares, next core.Handler) (core.Handler, error) {
 	if len(ms) == 0 {
 		return next, nil
@@ -75,6 +82,17 @@ func (r HttpRoute) Build() (router.Route, error) {
 	extra := r.Extra
 	r.Extra = nil
 
+	responser := core.StdResponse
+	if BuildHttpRouteResponser != nil {
+		responser, err = BuildHttpRouteResponser(r)
+		if err != nil {
+			return router.Route{}, err
+		}
+		if responser == nil {
+			responser = core.StdResponse
+		}
+	}
+
 	priority := r.Priority + matcher.Priority()
 	return router.Route{
 		Priority:   priority,
@@ -90,6 +108,6 @@ func (r HttpRoute) Build() (router.Route, error) {
 		Desc:      matcher.String(),
 		Matcher:   matcher,
 		Handler:   handler,
-		Responser: core.StdResponse,
+		Responser: responser,
 	}, nil
 }
