@@ -28,19 +28,19 @@ import (
 )
 
 var (
-	// BuildHttpStaticServer is used to customize the building
-	// of the http static server, which is used by the default
-	// http discovery builder.
+	// BuildStaticServer is used to customize the building of the static server,
+	// which is used by the default discovery builder.
 	//
-	// Default: use endpoint.New to build it based on http.
-	BuildHttpStaticServer func(server Server) (loadbalancer.Endpoint, error)
+	// Default: use http/endpoint.New to build it.
+	BuildStaticServer func(server Server) (loadbalancer.Endpoint, error)
 
-	// BuildHttpDiscovery builds a discovery by the config.
-	BuildHttpDiscovery func(Discovery) (loadbalancer.Discovery, error) = buildDiscovery
+	// BuildDiscovery builds a discovery by the config.
+	BuildDiscovery func(upid string, discovery Discovery) (loadbalancer.Discovery, error)
 )
 
 func init() {
-	BuildHttpStaticServer = func(s Server) (loadbalancer.Endpoint, error) {
+	BuildDiscovery = buildDiscovery
+	BuildStaticServer = func(s Server) (loadbalancer.Endpoint, error) {
 		if s.Host == "" {
 			return nil, errors.New("BuildStaticServer: host must not be empty")
 		}
@@ -48,14 +48,24 @@ func init() {
 	}
 }
 
-func buildHttpStaticServers(servers []Server) (loadbalancer.Endpoints, error) {
+func buildDiscovery(_ string, discovery Discovery) (loadbalancer.Discovery, error) {
+	eps, err := BuildStaticServers(discovery.Static.Servers)
+	if err != nil {
+		return nil, err
+	}
+	return upstream.NewDiscovery(eps...), nil
+}
+
+// BuildStaticServers builds a set of servers,
+// which use BuildStaticServer to build each server.
+func BuildStaticServers(servers []Server) (loadbalancer.Endpoints, error) {
 	if len(servers) == 0 {
 		return nil, nil
 	}
 
 	endpoints := make(loadbalancer.Endpoints, len(servers))
 	for i, s := range servers {
-		ep, err := BuildHttpStaticServer(s)
+		ep, err := BuildStaticServer(s)
 		if err != nil {
 			return nil, err
 		}
@@ -64,21 +74,13 @@ func buildHttpStaticServers(servers []Server) (loadbalancer.Endpoints, error) {
 	return endpoints, nil
 }
 
-func buildDiscovery(config Discovery) (loadbalancer.Discovery, error) {
-	eps, err := buildHttpStaticServers(config.Static.Servers)
-	if err != nil {
-		return nil, err
-	}
-	return upstream.NewDiscovery(eps...), nil
-}
-
 // Build builds an upstream by the config.
 func (up Upstream) Build() (*upstream.Upstream, error) {
 	if up.Id == "" {
 		return nil, errors.New("Upstream: missing Id")
 	}
 
-	discovery, err := BuildHttpDiscovery(up.Discovery)
+	discovery, err := BuildDiscovery(up.Id, up.Discovery)
 	if err != nil {
 		return nil, fmt.Errorf("Upstream<%s>: fail to build discovery: %w", up.Id, err)
 	}
