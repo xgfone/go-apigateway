@@ -20,6 +20,7 @@ import (
 	"slices"
 
 	innerhttpx "github.com/xgfone/go-apigateway/http/internal/httpx"
+	"github.com/xgfone/go-loadbalancer"
 	"github.com/xgfone/go-loadbalancer/httpx"
 )
 
@@ -55,17 +56,23 @@ type Responser func(*Context, *http.Response, error)
 
 // StdResponse is a standard response handler.
 func StdResponse(c *Context, resp *http.Response, err error) {
-	switch e := err.(type) {
+	switch err {
 	case nil:
 		if resp != nil {
 			CopyResponse(c, resp)
 		}
 
-	case http.Handler:
-		e.ServeHTTP(c.ClientResponse, c.ClientRequest)
+	case loadbalancer.ErrNoAvailableEndpoints:
+		c.ClientResponse.WriteHeader(503)
 
 	default:
-		sendtext(c.ClientResponse, 500, e.Error())
+		switch e := err.(type) {
+		case http.Handler:
+			e.ServeHTTP(c.ClientResponse, c.ClientRequest)
+
+		default:
+			sendtext(c.ClientResponse, 500, e.Error())
+		}
 	}
 }
 
