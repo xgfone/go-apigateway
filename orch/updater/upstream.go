@@ -22,6 +22,14 @@ import (
 	"github.com/xgfone/go-apigateway/upstream"
 )
 
+var (
+	// OnAddUpstreams is called when the upstreams are added.
+	OnAddUpstreams func(ups map[string]*upstream.Upstream)
+
+	// OnDelUpstreams is called when the upstreams are deleted.
+	OnDelUpstreams func(ids []string)
+)
+
 // SyncUpstreams receives the whole upstream configurations,
 // and synchronize them to the runtime.
 func SyncUpstreams(ctx context.Context, config <-chan []orch.Upstream) {
@@ -50,5 +58,12 @@ func SyncUpstreams(ctx context.Context, config <-chan []orch.Upstream) {
 		upstream.Manager.Dels(delups...)
 
 		lasts = configs
+
+		if len(addups) > 0 && OnAddUpstreams != nil {
+			OnAddUpstreams(addups)
+		}
+		if len(delups) > 0 && OnDelUpstreams != nil {
+			OnDelUpstreams(delups)
+		}
 	})
 }
