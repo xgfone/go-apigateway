@@ -89,6 +89,33 @@ type Server struct {
 
 // ------------------------------------------------------------------------ //
 
+// CompareServer compares the two servers to sort a set of servers.
+//
+//	-1 if a <  b
+//	 0 if a == b
+//	 1 if a >  b
+func CompareServer(a, b Server) int {
+	switch {
+	case a.Weight < b.Weight:
+		return 1
+
+	case a.Weight > b.Weight:
+		return -1
+
+	default:
+		switch {
+		case a.Host < b.Host:
+			return -1
+
+		case a.Host > b.Host:
+			return 1
+
+		default:
+			return int(a.Port) - int(b.Port)
+		}
+	}
+}
+
 // SortUpstreams sorts the upstreams.
 func SortUpstreams(ups []Upstream) {
 	slices.SortFunc(ups, func(a, b Upstream) int {

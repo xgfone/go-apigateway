@@ -14,7 +14,11 @@
 
 package orch
 
-import "testing"
+import (
+	"reflect"
+	"slices"
+	"testing"
+)
 
 func TestDiffUpstreams(t *testing.T) {
 	ups1 := []Upstream{
@@ -89,5 +93,28 @@ func TestDiffUpstreams(t *testing.T) {
 		t.Errorf("expect %d deleted upstreams, but got %d: %+v", 1, len(dels), dels)
 	} else if dels[0].Id != "up2" {
 		t.Errorf("expect deleted upstream '%s', but got '%s'", "up2", dels[0].Id)
+	}
+}
+
+func TestCompareServer(t *testing.T) {
+	servers := []Server{
+		{Host: "127.0.0.1", Port: 80, Weight: 1},
+		{Host: "127.0.0.1", Port: 80, Weight: 2},
+		{Host: "127.0.0.1", Port: 80, Weight: 3},
+		{Host: "127.0.0.2", Port: 80, Weight: 1},
+		{Host: "127.0.0.1", Port: 10, Weight: 1},
+	}
+	slices.SortFunc(servers, CompareServer)
+
+	expects := []Server{
+		{Host: "127.0.0.1", Port: 80, Weight: 3},
+		{Host: "127.0.0.1", Port: 80, Weight: 2},
+		{Host: "127.0.0.1", Port: 10, Weight: 1},
+		{Host: "127.0.0.1", Port: 80, Weight: 1},
+		{Host: "127.0.0.2", Port: 80, Weight: 1},
+	}
+
+	if !reflect.DeepEqual(servers, expects) {
+		t.Errorf("expect %+v, but got %+v", expects, servers)
 	}
 }
