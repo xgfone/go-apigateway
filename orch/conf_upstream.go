@@ -116,28 +116,11 @@ func CompareServer(a, b Server) int {
 	}
 }
 
-// SortUpstreams sorts the upstreams.
-func SortUpstreams(ups []Upstream) {
-	slices.SortFunc(ups, func(a, b Upstream) int {
-		switch {
-		case a.Id < b.Id:
-			return -1
-		case a.Id == b.Id:
-			return 0
-		default:
-			return 1
-		}
-	})
-}
-
 // DiffUpstreams compares the difference between new and old upstreams,
 // and reutrns the added and deleted upstreams.
 //
 // NOTICE: adds also contains the existed but changed upstreams.
 func DiffUpstreams(news, olds []Upstream) (adds, dels []Upstream) {
-	SortUpstreams(news)
-	SortUpstreams(olds)
-
 	ids := make(map[string]struct{}, len(news))
 	adds = make([]Upstream, 0, len(news)/2)
 	dels = make([]Upstream, 0, len(olds)/2)
