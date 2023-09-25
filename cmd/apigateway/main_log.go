@@ -26,8 +26,6 @@ import (
 
 var loglevel = flag.String("log.level", "info", "The log level, such as debug, info, warn, error.")
 
-// Level is the log level, which can be changed to adjust the level
-// of the logger that uses it.
 var level = new(slog.LevelVar)
 
 func initlogging() {
@@ -38,8 +36,6 @@ func initlogging() {
 	slog.SetDefault(slog.New(newJSONHandler(os.Stderr)))
 }
 
-// NewJSONHandler returns a new log handler based on JSON,
-// which will use Level as the handler level.
 func newJSONHandler(w io.Writer) slog.Handler {
 	o := slog.HandlerOptions{ReplaceAttr: replace, AddSource: true, Level: level}
 	return slog.NewJSONHandler(w, &o)

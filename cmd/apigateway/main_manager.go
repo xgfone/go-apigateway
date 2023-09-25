@@ -29,20 +29,26 @@ import (
 var manageraddr = flag.String("manageraddr", "", "The address used by manager. If set, start it.")
 
 func initmanager() {
-	if *manageraddr != "" {
+	if addr := *manageraddr; addr != "" {
 		regiseterReloadRoutes()
 		regiseterLoaderRoutes()
 		regiseterRuntimeRoutes()
-		go startserver(*manageraddr, http.DefaultServeMux, false)
+		go startserver("gateway", addr, http.DefaultServeMux, false)
 	}
 }
 
 func regiseterReloadRoutes() {
-	http.HandleFunc("/apigateway/reload/configs", func(w http.ResponseWriter, r *http.Request) {
-		reloadconf <- struct{}{}
-	})
-	http.HandleFunc("/apigateway/reload/tlscerts", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/apigateway/reload/certs", func(w http.ResponseWriter, r *http.Request) {
 		reloadcert <- struct{}{}
+	})
+	http.HandleFunc("/apigateway/reload/upstreams", func(w http.ResponseWriter, r *http.Request) {
+		reloadupstreams <- struct{}{}
+	})
+	http.HandleFunc("/apigateway/reload/http/routes", func(w http.ResponseWriter, r *http.Request) {
+		reloadhttproutes <- struct{}{}
+	})
+	http.HandleFunc("/apigateway/reload/http/middlewares/groups", func(w http.ResponseWriter, r *http.Request) {
+		reloadhttpmwgroups <- struct{}{}
 	})
 }
 

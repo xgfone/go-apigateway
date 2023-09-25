@@ -15,67 +15,18 @@
 package main
 
 import (
-	"context"
 	"flag"
-	"log/slog"
-	"net"
-	"net/http"
-	"time"
 
 	"github.com/xgfone/go-apigateway/http/router"
-	"github.com/xgfone/go-apigateway/nets"
-	"github.com/xgfone/go-atexit"
-	"github.com/xgfone/go-atexit/signal"
-	"github.com/xgfone/go-defaults"
 )
 
 var gatewayaddr = flag.String("gatewayaddr", ":80", "The address used by gateway.")
-
-func init() { defaults.ExitFunc.Set(atexit.Exit) }
 
 func main() {
 	flag.Parse()
 	initlogging()
 	initmanager()
 	initloader()
-	go signal.WaitExit(atexit.Execute)
-	startserver(*gatewayaddr, router.DefaultRouter, true)
-	atexit.Wait() // wait that all the clean functions end.
-}
 
-func startserver(addr string, handler http.Handler, trytls bool) {
-	ln, err := net.Listen("tcp", addr)
-	if err != nil {
-		slog.Error("fail to open the listener on the address",
-			"protocol", "tcp", "addr", addr, "err", err)
-		return
-	}
-	if trytls {
-		ln = tryTLSListener(ln)
-	}
-
-	svr := &http.Server{
-		Addr:    addr,
-		Handler: handler,
-
-		IdleTimeout:       time.Minute * 3,
-		ReadHeaderTimeout: time.Second * 3,
-
-		ErrorLog:    slog.NewLogLogger(slog.Default().Handler(), slog.LevelError),
-		BaseContext: baseContext,
-		ConnContext: connContext,
-	}
-
-	atexit.OnExit(func() { _ = svr.Shutdown(context.Background()) })
-	slog.Info("start the http server", "addr", addr)
-	defer slog.Info("stop the http server", "addr", addr)
-	_ = svr.Serve(ln)
-}
-
-func baseContext(ln net.Listener) context.Context {
-	return nets.SetListenerIntoContext(context.Background(), ln)
-}
-
-func connContext(ctx context.Context, conn net.Conn) context.Context {
-	return nets.SetConnIntoContext(ctx, conn)
+	startserver("gateway", *gatewayaddr, router.DefaultRouter, true)
 }

@@ -35,7 +35,10 @@ var (
 )
 
 var (
-	reloadconf         = make(chan struct{}, 1)
+	reloadupstreams    = make(chan struct{}, 1)
+	reloadhttproutes   = make(chan struct{}, 1)
+	reloadhttpmwgroups = make(chan struct{}, 1)
+
 	upstreamsloader    *dirloader.DirLoader[orch.Upstream]
 	httproutesloader   *dirloader.DirLoader[orch.HttpRoute]
 	httpmwgroupsloader *dirloader.DirLoader[orch.MiddlewareGroup]
@@ -46,7 +49,7 @@ func initloader() {
 	upstreamsch := make(chan []orch.Upstream)
 	upstreamsloader = dirloader.New[orch.Upstream](*upstreamslocaldir)
 	go updater.SyncUpstreams(atexit.Context(), upstreamsch)
-	go upstreamsloader.Sync(atexit.Context(), "upstreams", interval, reloadconf, func(ups []orch.Upstream) (changed bool) {
+	go upstreamsloader.Sync(atexit.Context(), "upstreams", interval, reloadupstreams, func(ups []orch.Upstream) (changed bool) {
 		changed = updateUpstreams(ups)
 		upstreamsch <- ups
 		return
@@ -55,7 +58,7 @@ func initloader() {
 	httproutesch := make(chan []orch.HttpRoute)
 	httproutesloader = dirloader.New[orch.HttpRoute](*httprouteslocaldir)
 	go updater.SyncHttpRoutes(atexit.Context(), httproutesch)
-	go httproutesloader.Sync(atexit.Context(), "httproutes", interval, reloadconf, func(routes []orch.HttpRoute) (changed bool) {
+	go httproutesloader.Sync(atexit.Context(), "httproutes", interval, reloadhttproutes, func(routes []orch.HttpRoute) (changed bool) {
 		changed = updateHttpRoutes(routes)
 		httproutesch <- routes
 		return
@@ -64,7 +67,7 @@ func initloader() {
 	httpmwgroupsch := make(chan []orch.MiddlewareGroup)
 	httpmwgroupsloader = dirloader.New[orch.MiddlewareGroup](*httpmwgroupslocaldir)
 	go updater.SyncHttpMiddlewareGroups(atexit.Context(), httpmwgroupsch)
-	go httpmwgroupsloader.Sync(atexit.Context(), "httpmiddlewaregroups", interval, reloadconf, func(groups []orch.MiddlewareGroup) bool {
+	go httpmwgroupsloader.Sync(atexit.Context(), "httpmiddlewaregroups", interval, reloadhttpmwgroups, func(groups []orch.MiddlewareGroup) bool {
 		httpmwgroupsch <- groups
 		return false
 	})
