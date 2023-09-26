@@ -12,38 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package router
+package logger
 
 import (
-	"net/http"
+	"context"
+	"log/slog"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/xgfone/go-apigateway/http/core"
-	"github.com/xgfone/go-apigateway/internal/slogx"
 )
 
-func BenchmarkRouter(b *testing.B) {
-	slogx.DisableSLog()
-
-	router := New()
-	router.AddRoutes(Route{
-		RouteId:    "route",
-		UpstreamId: "up",
-		Matcher:    AlwaysTrue,
-		Handler:    func(*core.Context) {},
-		Responser:  func(*core.Context, *http.Response, error) {},
-	})
+func TestLogger(t *testing.T) {
+	handler := Logger(func(ctx *core.Context, f func(...slog.Attr)) {
+		f(slog.String("test", "test"))
+	}).Handler(func(c *core.Context) {})
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "http://localhost", nil)
-	// rw := httpx.NewResponseWriter(rec)
-
-	b.ResetTimer()
-	b.ReportAllocs()
-	b.RunParallel(func(p *testing.PB) {
-		for p.Next() {
-			router.ServeHTTP(rec, req)
-		}
-	})
+	c := core.AcquireContext(context.Background())
+	c.ClientResponse = core.AcquireResponseWriter(rec)
+	c.ClientRequest = httptest.NewRequest("GET", "/", nil)
+	handler(c)
 }

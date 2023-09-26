@@ -45,7 +45,6 @@ type Router struct {
 
 	allmap atomic.Value // map[string]Route
 	routes atomic.Pointer[routeswrapper]
-	notlog atomic.Bool
 
 	gmddlws middleware.Middlewares
 	handler core.Handler
@@ -209,8 +208,6 @@ func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (r *Router) serve(c *core.Context) {
-	start := time.Now()
-
 	defer closeResponse(c)
 	matched := r.serveRoute(c)
 	if !matched {
@@ -220,8 +217,6 @@ func (r *Router) serve(c *core.Context) {
 	if !c.ClientResponse.WroteHeader() {
 		c.SendResponse()
 	}
-
-	r.log(c, start, matched)
 }
 
 func (r *Router) serveRoute(c *core.Context) (matched bool) {

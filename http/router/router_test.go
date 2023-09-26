@@ -45,7 +45,6 @@ func TestSortRoutes(t *testing.T) {
 
 func TestRouter(t *testing.T) {
 	AfterRoute = func(c *core.Context) { c.ClientResponse.WriteHeader(201) }
-	DefaultRouter.DisableLog(false)
 
 	DefaultRouter.AddRoutes()
 	DefaultRouter.DelRoutes()

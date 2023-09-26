@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package router
+// Package provides a logger middleware to log the request.
+package logger
 
 import (
 	"log/slog"
@@ -20,19 +21,30 @@ import (
 	"time"
 
 	"github.com/xgfone/go-apigateway/http/core"
+	"github.com/xgfone/go-apigateway/http/middleware"
 	"github.com/xgfone/go-apigateway/http/statuscode"
 )
 
-// DisableLog sets whether the router disables the logging or not.
-func (r *Router) DisableLog(disable bool) { r.notlog.Store(disable) }
+// Collect is used to collect the extra key-value attributes if set.
+//
+// Default: nil
+var Collect func(c *core.Context, append func(...slog.Attr))
 
-func (r *Router) log(c *core.Context, start time.Time, matched bool) {
-	if r.notlog.Load() {
-		return
-	}
+// Logger returns a new middleware to log the request.
+//
+// If collect is nil, use Collect instead.
+func Logger(collect func(*core.Context, func(...slog.Attr))) middleware.Middleware {
+	return middleware.New("logger", nil, func(next core.Handler) core.Handler {
+		return func(c *core.Context) { logreq(c, next, collect) }
+	})
+}
+
+func logreq(c *core.Context, next core.Handler, collect func(*core.Context, func(...slog.Attr))) {
+	start := time.Now()
+	next(c)
+	cost := time.Since(start)
 
 	req := c.ClientRequest
-	cost := time.Since(start)
 	logattrs := getattrs()
 	logattrs.Append(
 		slog.String("reqid", c.RequestID()),
@@ -42,7 +54,7 @@ func (r *Router) log(c *core.Context, start time.Time, matched bool) {
 		slog.String("query", req.URL.RawQuery),
 	)
 
-	if matched {
+	if c.RouteId != "" {
 		logattrs.Append(slog.String("route", c.RouteId))
 		if c.UpstreamId != "" {
 			logattrs.Append(slog.String("upstream", c.UpstreamId))
@@ -56,6 +68,13 @@ func (r *Router) log(c *core.Context, start time.Time, matched bool) {
 		slog.String("cost", cost.String()),
 		slog.Int("code", c.ClientResponse.StatusCode()),
 	)
+
+	switch {
+	case collect != nil:
+		collect(c, logattrs.Append)
+	case Collect != nil:
+		Collect(c, logattrs.Append)
+	}
 
 	switch e := c.Error.(type) {
 	case nil:
