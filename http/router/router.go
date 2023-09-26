@@ -174,8 +174,8 @@ func cmproute(left, right *Route) bool {
 // If matching successfully, return true. Or, return false.
 func (r *Router) Handle(c *core.Context) (handled bool) { return r.serveRoute(c) }
 
-// HandleHTTP is the same as ServeHTTP, but use Context as the input argument.
-func (r *Router) HandleHTTP(c *core.Context) { r.serveHTTP(c) }
+// Serve is the same as ServeHTTP, but use Context as the input argument.
+func (r *Router) Serve(c *core.Context) { r.serve(c) }
 
 var _ http.Handler = new(Router)
 
@@ -193,10 +193,10 @@ func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	c.ClientRequest = req
-	r.serveHTTP(c)
+	r.serve(c)
 }
 
-func (r *Router) serveHTTP(c *core.Context) {
+func (r *Router) serve(c *core.Context) {
 	start := time.Now()
 
 	defer closeResponse(c)
