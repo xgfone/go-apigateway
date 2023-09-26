@@ -17,6 +17,8 @@ package main
 import (
 	"flag"
 
+	"github.com/xgfone/go-apigateway/http/middleware/middlewares/logger"
+	"github.com/xgfone/go-apigateway/http/middleware/middlewares/requestid"
 	"github.com/xgfone/go-apigateway/http/router"
 )
 
@@ -28,5 +30,6 @@ func main() {
 	initmanager()
 	initloader()
 
+	router.DefaultRouter.Use(logger.Logger(nil), requestid.RequestID(nil))
 	startserver("gateway", *gatewayaddr, router.DefaultRouter, true)
 }
