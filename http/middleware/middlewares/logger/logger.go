@@ -25,10 +25,17 @@ import (
 	"github.com/xgfone/go-apigateway/http/statuscode"
 )
 
-// Collect is used to collect the extra key-value attributes if set.
-//
-// Default: nil
-var Collect func(c *core.Context, append func(...slog.Attr))
+var (
+	// Collect is used to collect the extra key-value attributes if set.
+	//
+	// Default: nil
+	Collect func(c *core.Context, append func(...slog.Attr))
+
+	// Enabled is used to decide whether to log the request if set.
+	//
+	// Default: nil
+	Enabled func(*core.Context) bool
+)
 
 // Logger returns a new middleware to log the request.
 //
@@ -40,6 +47,11 @@ func Logger(collect func(*core.Context, func(...slog.Attr))) middleware.Middlewa
 }
 
 func logreq(c *core.Context, next core.Handler, collect func(*core.Context, func(...slog.Attr))) {
+	if (Enabled != nil && !Enabled(c)) || !slog.Default().Enabled(c.Context, slog.LevelInfo) {
+		next(c)
+		return
+	}
+
 	start := time.Now()
 	next(c)
 	cost := time.Since(start)
