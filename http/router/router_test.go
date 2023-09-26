@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/xgfone/go-apigateway/http/core"
+	"github.com/xgfone/go-apigateway/http/middleware"
 )
 
 func TestSortRoutes(t *testing.T) {
@@ -96,5 +97,25 @@ func TestRouter(t *testing.T) {
 		t.Errorf("expect 1 route, but got %d: %+v", len(routes), routes)
 	} else if id := routes[0].RouteId; id != "route2" {
 		t.Errorf("expect route id '%s', but got '%s'", "route2", id)
+	}
+}
+
+func TestRouterMiddlewares(t *testing.T) {
+	router := New()
+	router.Use(middleware.New("test", nil, func(next core.Handler) core.Handler {
+		return func(c *core.Context) {
+			c.ClientResponse.Header().Set("X-Test", "1")
+			next(c)
+		}
+	}))
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/", nil)
+	router.ServeHTTP(rec, req)
+	if rec.Code != 404 {
+		t.Errorf("expect status code %d, but got %d", 404, rec.Code)
+	}
+	if v := rec.Header().Get("X-Test"); v != "1" {
+		t.Errorf("expect 'X-Test' value '%s', but got '%s'", "1", v)
 	}
 }

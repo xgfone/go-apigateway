@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/xgfone/go-apigateway/http/core"
+	"github.com/xgfone/go-apigateway/http/middleware"
 	"github.com/xgfone/go-apigateway/http/statuscode"
 	"github.com/xgfone/go-defaults"
 )
@@ -45,6 +46,9 @@ type Router struct {
 	allmap atomic.Value // map[string]Route
 	routes atomic.Pointer[routeswrapper]
 	notlog atomic.Bool
+
+	gmddlws middleware.Middlewares
+	handler core.Handler
 }
 
 // New returns a new router.
@@ -52,7 +56,15 @@ func New() *Router {
 	r := &Router{routem: make(map[string]Route, 32)}
 	r.allmap.Store(map[string]Route(nil))
 	r.routes.Store(new(routeswrapper))
+	r.handler = r.serve
 	return r
+}
+
+// Use appends the global middlewares that act on all the routes,
+// which is not thread-safe and should be used only before running.
+func (r *Router) Use(mws ...middleware.Middleware) {
+	r.gmddlws = append(r.gmddlws, mws...)
+	r.handler = r.gmddlws.Handler(r.serve)
 }
 
 // AddRoutes adds the routes if they do not exist. Or. update them.
@@ -175,7 +187,7 @@ func cmproute(left, right *Route) bool {
 func (r *Router) Handle(c *core.Context) (handled bool) { return r.serveRoute(c) }
 
 // Serve is the same as ServeHTTP, but use Context as the input argument.
-func (r *Router) Serve(c *core.Context) { r.serve(c) }
+func (r *Router) Serve(c *core.Context) { r.handler(c) }
 
 var _ http.Handler = new(Router)
 
@@ -193,7 +205,7 @@ func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	c.ClientRequest = req
-	r.serve(c)
+	r.handler(c)
 }
 
 func (r *Router) serve(c *core.Context) {
