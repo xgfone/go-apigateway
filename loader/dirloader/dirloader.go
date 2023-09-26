@@ -86,7 +86,7 @@ func (l *DirLoader[T]) Sync(ctx context.Context, rsctype string, interval time.D
 	var lastEtag string
 	load := func() {
 		defer slogx.WrapPanic(ctx)
-		slog.Debug("start to load the resource", slog.String("type", rsctype))
+		slog.LogAttrs(ctx, slog.LevelDebug-4, "start to load the resource", slog.String("type", rsctype))
 
 		resources, etag, err := l.Load()
 		if err != nil {
