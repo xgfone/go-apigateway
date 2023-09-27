@@ -61,7 +61,6 @@ func logreq(c *core.Context, next core.Handler) {
 		slog.String("raddr", req.RemoteAddr),
 		slog.String("method", req.Method),
 		slog.String("path", req.URL.Path),
-		slog.String("query", req.URL.RawQuery),
 	)
 
 	if c.RouteId != "" {
