@@ -37,16 +37,14 @@ var (
 	Enabled func(*core.Context) bool
 )
 
-// Logger returns a new middleware to log the request.
-//
-// If collect is nil, use Collect instead.
-func Logger(collect func(*core.Context, func(...slog.Attr))) middleware.Middleware {
-	return middleware.New("logger", nil, func(next core.Handler) core.Handler {
-		return func(c *core.Context) { logreq(c, next, collect) }
-	})
-}
+// Logger returns a logger middleware to log the http request.
+func Logger() middleware.Middleware { return logger }
 
-func logreq(c *core.Context, next core.Handler, collect func(*core.Context, func(...slog.Attr))) {
+var logger = middleware.New("logger", nil, func(next core.Handler) core.Handler {
+	return func(c *core.Context) { logreq(c, next) }
+})
+
+func logreq(c *core.Context, next core.Handler) {
 	if (Enabled != nil && !Enabled(c)) || !slog.Default().Enabled(c.Context, slog.LevelInfo) {
 		next(c)
 		return
@@ -81,10 +79,7 @@ func logreq(c *core.Context, next core.Handler, collect func(*core.Context, func
 		slog.Int("code", c.ClientResponse.StatusCode()),
 	)
 
-	switch {
-	case collect != nil:
-		collect(c, logattrs.Append)
-	case Collect != nil:
+	if Collect != nil {
 		Collect(c, logattrs.Append)
 	}
 

@@ -30,6 +30,6 @@ func main() {
 	initmanager()
 	initloader()
 
-	router.DefaultRouter.Use(logger.Logger(nil), requestid.RequestID(nil))
+	router.DefaultRouter.Use(logger.Logger(), requestid.RequestID(nil))
 	startserver("gateway", *gatewayaddr, router.DefaultRouter, true)
 }
