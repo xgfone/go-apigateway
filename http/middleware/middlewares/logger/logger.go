@@ -34,7 +34,7 @@ var (
 	// Enabled is used to decide whether to log the request if set.
 	//
 	// Default: nil
-	Enabled func(*core.Context) bool
+	Enabled func(c *core.Context) bool
 )
 
 // Logger returns a logger middleware to log the http request.
