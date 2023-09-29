@@ -60,6 +60,7 @@ func logreq(c *core.Context, next core.Handler) {
 		slog.String("reqid", c.RequestID()),
 		slog.String("raddr", req.RemoteAddr),
 		slog.String("method", req.Method),
+		slog.String("host", req.Host),
 		slog.String("path", req.URL.Path),
 	)
 
@@ -74,8 +75,8 @@ func logreq(c *core.Context, next core.Handler) {
 	}
 
 	logattrs.Append(
-		slog.String("cost", cost.String()),
 		slog.Int("code", c.ClientResponse.StatusCode()),
+		slog.String("cost", cost.String()),
 	)
 
 	if Collect != nil {
