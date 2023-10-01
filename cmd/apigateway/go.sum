@@ -10,8 +10,8 @@ github.com/xgfone/go-defaults v0.13.0 h1:aJX/RJSI8yN6Xxn1b1NlFQyClwION2DM5X1NDz3
 github.com/xgfone/go-defaults v0.13.0/go.mod h1:4qxXP2vvK8n2csVwYmFbhbQAISq5s/2zYZE9CKYj/bw=
 github.com/xgfone/go-http-matcher v0.1.0 h1:wfvk4od9SOFnYTzfyiEdqBlbuTTBxrZfMYIRV5/50Hw=
 github.com/xgfone/go-http-matcher v0.1.0/go.mod h1:fPetvyIHNJiyAxt6MwVz8pFfHFpm+34KhlpdvZU9/HQ=
-github.com/xgfone/go-loadbalancer v0.8.0 h1:udqnbVqhLlyCF4YWrvDSCeU3T52yHW7TO64yfL8RFTM=
-github.com/xgfone/go-loadbalancer v0.8.0/go.mod h1:keH6ehohtkUlMDF+TMxSCGeSyC4youvN925uCes9EuI=
+github.com/xgfone/go-loadbalancer v0.9.0 h1:37/bP14+WeIPt90ee9fuFrthx6k6G5pjUZa6i3EbcSc=
+github.com/xgfone/go-loadbalancer v0.9.0/go.mod h1:keH6ehohtkUlMDF+TMxSCGeSyC4youvN925uCes9EuI=
 github.com/xgfone/go-structs v0.2.0 h1:Weq/TfH+9azlzUdtz9xwWFqxczD7R404G3k94G04Anw=
 github.com/xgfone/go-structs v0.2.0/go.mod h1:/zjyb3pm/NtFUnwUetDWuBfhYUuxzUyBSV2Xy1tvwnY=
 github.com/xgfone/go-tlsx v0.1.0 h1:iu5YkIirMvsQc6RMPswlabUsZSvGSEo265sEzxbYEB8=

@@ -4,7 +4,7 @@ require (
 	github.com/xgfone/go-apigateway v0.0.0
 	github.com/xgfone/go-atexit v0.11.0
 	github.com/xgfone/go-defaults v0.13.0
-	github.com/xgfone/go-loadbalancer v0.8.0
+	github.com/xgfone/go-loadbalancer v0.9.0
 	github.com/xgfone/go-tlsx v0.1.0
 )
 
