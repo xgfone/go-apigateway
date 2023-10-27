@@ -14,5 +14,5 @@ github.com/xgfone/go-loadbalancer v0.9.0 h1:37/bP14+WeIPt90ee9fuFrthx6k6G5pjUZa6
 github.com/xgfone/go-loadbalancer v0.9.0/go.mod h1:keH6ehohtkUlMDF+TMxSCGeSyC4youvN925uCes9EuI=
 github.com/xgfone/go-structs v0.2.0 h1:Weq/TfH+9azlzUdtz9xwWFqxczD7R404G3k94G04Anw=
 github.com/xgfone/go-structs v0.2.0/go.mod h1:/zjyb3pm/NtFUnwUetDWuBfhYUuxzUyBSV2Xy1tvwnY=
-github.com/xgfone/go-tlsx v0.1.0 h1:iu5YkIirMvsQc6RMPswlabUsZSvGSEo265sEzxbYEB8=
-github.com/xgfone/go-tlsx v0.1.0/go.mod h1:qnvBKGWdGRmVvjSJrx9q4hfLrEJdMt+EC+SuYuNUD6s=
+github.com/xgfone/go-tlsx v0.2.0 h1:SBl5eI9+ykgX0Oe7Cr7WshMarw776p3GES2TL6+AWwc=
+github.com/xgfone/go-tlsx v0.2.0/go.mod h1:qnvBKGWdGRmVvjSJrx9q4hfLrEJdMt+EC+SuYuNUD6s=

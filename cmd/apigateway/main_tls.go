@@ -79,7 +79,7 @@ func getTLSConfig() *tls.Config {
 				name = fmt.Sprintf("cert%d", i+1)
 			}
 		}
-		go tlsx.WatchCertFiles(atexit.Context(), reloadcert, time.Minute, file.CertFile, file.KeyFile, cb(name))
+		go tlsx.WatchCertFile(atexit.Context(), reloadcert, time.Minute, file.CertFile, file.KeyFile, cb(name))
 	}
 
 	return tlsx.DefaultCertManager.ServerConfig(nil)
