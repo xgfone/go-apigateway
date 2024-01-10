@@ -10,10 +10,12 @@ require (
 
 require (
 	github.com/xgfone/go-atomicvalue v0.2.0 // indirect
-	github.com/xgfone/go-binder v0.5.0 // indirect
+	github.com/xgfone/go-binder v0.5.2 // indirect
 	github.com/xgfone/go-cast v0.8.1 // indirect
-	github.com/xgfone/go-http-matcher v0.1.0 // indirect
-	github.com/xgfone/go-structs v0.2.0 // indirect
+	github.com/xgfone/go-http-matcher v0.1.1 // indirect
+	github.com/xgfone/go-structs v0.2.1 // indirect
+	github.com/xgfone/go-validation v0.3.0 // indirect
+	github.com/xgfone/predicate v1.3.3 // indirect
 )
 
 replace github.com/xgfone/go-apigateway => ../..
