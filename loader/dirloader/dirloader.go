@@ -162,6 +162,9 @@ func (l *DirLoader[T]) Load() (resources []T, etag string, err error) {
 }
 
 func (l *DirLoader[T]) decode(dst *[]T, data []byte) error {
+	if len(data) == 0 {
+		return nil
+	}
 	return json.Unmarshal(data, dst)
 }
 
