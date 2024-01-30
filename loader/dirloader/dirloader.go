@@ -90,7 +90,7 @@ func (l *DirLoader[T]) Sync(ctx context.Context, rsctype string, interval time.D
 
 		resources, etag, err := l.Load()
 		if err != nil {
-			slog.Error("fail to load the resources from the local files", "err", err)
+			slog.Error("fail to load the resources from the local files", "type", rsctype, "err", err)
 			return
 		}
 
