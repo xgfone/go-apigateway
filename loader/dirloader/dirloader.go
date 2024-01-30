@@ -206,8 +206,11 @@ func (l *DirLoader[T]) _readfile(buf *bytes.Buffer, path string) (err error) {
 func (l *DirLoader[T]) scanfiles() (err error) {
 	files := make(map[string]struct{}, max(8, len(l.files)))
 	err = filepath.WalkDir(l.dir, func(path string, d fs.DirEntry, err error) error {
-		if err != nil || d.IsDir() {
-			return err
+		if err != nil {
+			return fmt.Errorf("fail to walk dir '%s': %w", l.dir, err)
+		}
+		if d.IsDir() {
+			return nil
 		}
 
 		if name := d.Name(); name[0] == '_' || !strings.HasSuffix(name, ".json") {
@@ -216,7 +219,7 @@ func (l *DirLoader[T]) scanfiles() (err error) {
 
 		fi, err := d.Info()
 		if err != nil {
-			return err
+			return fmt.Errorf("fail to get info of file '%s': %w", path, err)
 		}
 
 		f, ok := l.files[path]
