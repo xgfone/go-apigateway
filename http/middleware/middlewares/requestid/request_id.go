@@ -17,12 +17,12 @@
 package requestid
 
 import (
-	"math/rand"
 	"net/http"
 	"unsafe"
 
 	"github.com/xgfone/go-apigateway/http/core"
 	"github.com/xgfone/go-apigateway/http/middleware"
+	"github.com/xgfone/go-apigateway/internal/rand"
 )
 
 // Generate is used to generate a request id for the http request.
