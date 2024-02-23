@@ -26,6 +26,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -33,6 +34,7 @@ import (
 	"time"
 
 	"github.com/xgfone/go-apigateway/internal/jsonx"
+	"github.com/xgfone/go-apigateway/internal/mapx"
 	"github.com/xgfone/go-apigateway/internal/slogx"
 	"github.com/xgfone/go-apigateway/loader"
 )
@@ -147,7 +149,11 @@ func (l *DirLoader[T]) Load() (resources []T, etag string, err error) {
 	}
 
 	resources = make([]T, 0, len(l.files))
-	for path, file := range l.files {
+	paths := mapx.Keys(l.files)
+	slices.Sort(paths)
+	for _, path := range paths {
+		file := l.files[path]
+
 		var resource []T
 		if err = l.decode(&resource, file.data); err != nil {
 			err = fmt.Errorf("fail to decode resource file '%s': %w", path, err)
