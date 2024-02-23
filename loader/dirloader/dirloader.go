@@ -68,6 +68,11 @@ type DirLoader[T any] struct {
 
 // New returns a new DirLoader with the directory.
 func New[T any](dir string) *DirLoader[T] {
+	dir, err := filepath.Abs(dir)
+	if err != nil {
+		panic(err)
+	}
+
 	return &DirLoader[T]{
 		dir:   dir,
 		files: make(map[string]*file, 8),
@@ -216,15 +221,26 @@ func (l *DirLoader[T]) scanfiles() (err error) {
 			return fmt.Errorf("fail to walk dir '%s': %w", l.dir, err)
 		}
 
-		switch name := d.Name(); {
-		case strings.HasPrefix(name, "_"):
+		if d.IsDir() {
 			return nil
+		}
 
-		case d.IsDir():
+		if name := d.Name(); strings.HasPrefix(name, "_") || !strings.HasSuffix(name, ".json") {
 			return nil
+		}
 
-		case !strings.HasSuffix(name, ".json"):
-			return nil
+		for _path := strings.TrimPrefix(path, l.dir); len(_path) > 0; {
+			var name string
+			index := strings.IndexByte(_path, filepath.Separator)
+			if index < 0 {
+				name, _path = _path, ""
+			} else {
+				name, _path = _path[:index], _path[index+1:]
+			}
+
+			if strings.HasPrefix(name, "_") {
+				return nil
+			}
 		}
 
 		fi, err := d.Info()
