@@ -215,11 +215,15 @@ func (l *DirLoader[T]) scanfiles() (err error) {
 		if err != nil {
 			return fmt.Errorf("fail to walk dir '%s': %w", l.dir, err)
 		}
-		if d.IsDir() {
-			return nil
-		}
 
-		if name := d.Name(); name[0] == '_' || !strings.HasSuffix(name, ".json") {
+		switch name := d.Name(); {
+		case strings.HasPrefix(name, "_"):
+			return nil
+
+		case d.IsDir():
+			return nil
+
+		case !strings.HasSuffix(name, ".json"):
 			return nil
 		}
 
