@@ -20,10 +20,10 @@ import (
 
 	_ "github.com/xgfone/go-apigateway/http/middleware/middlewares"
 
-	"github.com/xgfone/go-apigateway/loader/dirloader"
 	"github.com/xgfone/go-apigateway/orch"
 	"github.com/xgfone/go-apigateway/orch/updater"
 	"github.com/xgfone/go-atexit"
+	"github.com/xgfone/go-loader/dirloader"
 )
 
 var (
