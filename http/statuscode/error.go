@@ -16,7 +16,6 @@
 package statuscode
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -46,12 +45,19 @@ var (
 
 // Error represents an error with the status code.
 type Error struct {
-	Code int
-	Err  error
+	Code    int
+	Message string
+
+	Err error `json:"-"`
 }
 
 // NewError returns a new Error with the status code and without error.
-func NewError(statusCode int) Error { return Error{Code: statusCode} }
+func NewError(statusCode int) Error {
+	return Error{
+		Code:    statusCode,
+		Message: http.StatusText(statusCode),
+	}
+}
 
 // StatusCode returns the error status code.
 func (e Error) StatusCode() int { return e.Code }
@@ -61,35 +67,35 @@ func (e Error) Unwrap() error { return e.Err }
 
 // Error returns the error message.
 func (e Error) Error() string {
-	if e.Err == nil {
-		return http.StatusText(e.Code)
-	}
-	return e.Err.Error()
+	return fmt.Sprintf("%d: %s", e.Code, e.Message)
 }
 
 // WithError returns a new Error with the new error.
 func (e Error) WithError(err error) Error {
 	e.Err = err
+	e.Message = err.Error()
 	return e
 }
 
 // WithMessage is a convenient method that convert the format message
 // to an error and set it, then return the new error.
 func (e Error) WithMessage(msg string, args ...interface{}) Error {
-	if len(args) > 0 {
-		msg = fmt.Sprintf(msg, args...)
+	if len(args) == 0 {
+		e.Message = msg
+	} else {
+		e.Message = fmt.Sprintf(msg, args...)
 	}
-	return e.WithError(errors.New(msg))
+	return e
 }
 
 // ServeHTTP implements the interface http.Handler.
 func (e Error) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if e.Err == nil {
+	if e.Message == "" {
 		w.WriteHeader(e.Code)
 		return
 	}
 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(e.Code)
-	_, _ = io.WriteString(w, e.Err.Error())
+	_, _ = io.WriteString(w, e.Message)
 }
