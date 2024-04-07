@@ -49,60 +49,51 @@ func initloader() {
 	upstreamsch := make(chan []orch.Upstream)
 	upstreamsloader = dirloader.New[orch.Upstream](*upstreamslocaldir)
 	go updater.SyncUpstreams(atexit.Context(), upstreamsch)
-	go upstreamsloader.Sync(atexit.Context(), "upstreams", interval, reloadupstreams, func(ups []orch.Upstream) (changed bool) {
-		changed = updateUpstreams(ups)
+	go upstreamsloader.Sync(atexit.Context(), "upstreams", interval, reloadupstreams, func(ups []orch.Upstream) {
+		updateUpstreams(ups)
 		upstreamsch <- ups
-		return
 	})
 
 	httproutesch := make(chan []orch.HttpRoute)
 	httproutesloader = dirloader.New[orch.HttpRoute](*httprouteslocaldir)
 	go updater.SyncHttpRoutes(atexit.Context(), httproutesch)
-	go httproutesloader.Sync(atexit.Context(), "httproutes", interval, reloadhttproutes, func(routes []orch.HttpRoute) (changed bool) {
-		changed = updateHttpRoutes(routes)
+	go httproutesloader.Sync(atexit.Context(), "httproutes", interval, reloadhttproutes, func(routes []orch.HttpRoute) {
+		updateHttpRoutes(routes)
 		httproutesch <- routes
-		return
 	})
 
 	httpmwgroupsch := make(chan []orch.MiddlewareGroup)
 	httpmwgroupsloader = dirloader.New[orch.MiddlewareGroup](*httpmwgroupslocaldir)
 	go updater.SyncHttpMiddlewareGroups(atexit.Context(), httpmwgroupsch)
-	go httpmwgroupsloader.Sync(atexit.Context(), "httpmiddlewaregroups", interval, reloadhttpmwgroups, func(groups []orch.MiddlewareGroup) bool {
+	go httpmwgroupsloader.Sync(atexit.Context(), "httpmiddlewaregroups", interval, reloadhttpmwgroups, func(groups []orch.MiddlewareGroup) {
 		httpmwgroupsch <- groups
-		return false
 	})
 }
 
-func updateUpstreams(ups []orch.Upstream) (changed bool) {
+func updateUpstreams(ups []orch.Upstream) {
 	for i, _len := 0, len(ups); i < _len; i++ {
 		up := &ups[i]
 
 		if up.Timeout > 0 && up.Timeout < time.Second {
 			up.Timeout *= time.Millisecond
-			changed = true
 		}
 
 		if up.Retry.Interval > 0 && up.Retry.Interval < time.Second {
 			up.Retry.Interval *= time.Millisecond
-			changed = true
 		}
 	}
-	return
 }
 
-func updateHttpRoutes(routes []orch.HttpRoute) (changed bool) {
+func updateHttpRoutes(routes []orch.HttpRoute) {
 	for i, _len := 0, len(routes); i < _len; i++ {
 		r := &routes[i]
 
 		if r.RequestTimeout > 0 && r.RequestTimeout < time.Second {
 			r.RequestTimeout *= time.Millisecond
-			changed = true
 		}
 
 		if r.ForwardTimeout > 0 && r.ForwardTimeout < time.Second {
 			r.ForwardTimeout *= time.Millisecond
-			changed = true
 		}
 	}
-	return
 }

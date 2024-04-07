@@ -12,8 +12,8 @@ github.com/xgfone/go-http-matcher v0.1.1 h1:nZ3ksKW/ZJw0HSaAszPgEi0faaM82Q2Qg2V8
 github.com/xgfone/go-http-matcher v0.1.1/go.mod h1:fPetvyIHNJiyAxt6MwVz8pFfHFpm+34KhlpdvZU9/HQ=
 github.com/xgfone/go-loadbalancer v0.9.0 h1:37/bP14+WeIPt90ee9fuFrthx6k6G5pjUZa6i3EbcSc=
 github.com/xgfone/go-loadbalancer v0.9.0/go.mod h1:keH6ehohtkUlMDF+TMxSCGeSyC4youvN925uCes9EuI=
-github.com/xgfone/go-loader v0.1.0 h1:4k/+PUQlsjnvvXMgSxPs6X1S9rjcKPdza02l5raX7ok=
-github.com/xgfone/go-loader v0.1.0/go.mod h1:uTHq1ddC0UtixytO+lpFY+pIEQh/CVE1zFOFyIwKZfE=
+github.com/xgfone/go-loader v0.3.0 h1:lAne/IPeVJVEyqXEw8B+b6cBJSgqnPg3PK9qvaGjYSQ=
+github.com/xgfone/go-loader v0.3.0/go.mod h1:uTHq1ddC0UtixytO+lpFY+pIEQh/CVE1zFOFyIwKZfE=
 github.com/xgfone/go-structs v0.2.1 h1:n9vVgvTXhgdykdc38oAIa2trutf56vgo2AbD+Y0m8M0=
 github.com/xgfone/go-structs v0.2.1/go.mod h1:mg50ogAqRnb1IWC9TyZ4vNqR/qacK0NMFfpy+k/rrsQ=
 github.com/xgfone/go-tlsx v0.2.0 h1:SBl5eI9+ykgX0Oe7Cr7WshMarw776p3GES2TL6+AWwc=
