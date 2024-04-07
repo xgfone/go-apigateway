@@ -59,6 +59,7 @@ func TestBlock(t *testing.T) {
 	}
 
 	c.Error = nil
+	c.IsAborted = false
 	c.ClientRequest = &http.Request{RemoteAddr: "192.168.1.1"}
 	handler(c)
 	if c.Error == nil {
@@ -66,6 +67,7 @@ func TestBlock(t *testing.T) {
 	}
 
 	c.Error = nil
+	c.IsAborted = false
 	c.ClientRequest = &http.Request{RemoteAddr: "1.2.3.4"}
 	handler(c)
 	if c.Error != nil {
