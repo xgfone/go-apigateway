@@ -61,6 +61,10 @@ func Processor(p directive.Processor, conf any) (middleware.Middleware, error) {
 		}
 
 		return func(c *core.Context) {
+			if c.IsAborted {
+				return
+			}
+
 			c.OnForward(func() { p.Process(c) })
 			next(c)
 		}

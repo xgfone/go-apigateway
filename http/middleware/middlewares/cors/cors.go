@@ -168,7 +168,6 @@ func CORS(config Config) middleware.Middleware {
 			c.ClientResponse.WriteHeader(http.StatusNoContent)
 		}
 	})
-
 }
 
 func matchScheme(domain, pattern string) bool {

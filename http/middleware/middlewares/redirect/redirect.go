@@ -75,6 +75,10 @@ func Redirect(config Config) (middleware.Middleware, error) {
 
 	return middleware.New("redirect", config, func(next core.Handler) core.Handler {
 		return func(c *core.Context) {
+			if c.IsAborted {
+				return
+			}
+
 			if !redirect(c) {
 				next(c)
 			}

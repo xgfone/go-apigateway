@@ -71,6 +71,10 @@ func Block(cidrs ...string) (middleware.Middleware, error) {
 
 	return middleware.New("block", cidrs, func(next core.Handler) core.Handler {
 		return func(c *core.Context) {
+			if c.IsAborted {
+				return
+			}
+
 			ip := c.ClientIP()
 			if !ip.IsValid() || !ipchecker.ContainsAddr(ip) {
 				next(c)

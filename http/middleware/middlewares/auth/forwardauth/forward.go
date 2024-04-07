@@ -158,6 +158,10 @@ func (a forwardauth) with(next core.Handler) forwardauth {
 }
 
 func (a *forwardauth) Handle(c *core.Context) {
+	if c.IsAborted {
+		return
+	}
+
 	ctx, cancel := context.WithTimeout(c.Context, a.timeout)
 	defer cancel()
 
