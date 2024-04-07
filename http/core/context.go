@@ -136,7 +136,7 @@ func (c *Context) SendResponse() {
 	if c.Responser == nil {
 		StdResponse(c, c.UpstreamResponse, c.Error)
 	} else {
-		c.Responser(c, c.UpstreamResponse, c.Error)
+		c.Responser.Respond(c, c.UpstreamResponse, c.Error)
 	}
 }
 

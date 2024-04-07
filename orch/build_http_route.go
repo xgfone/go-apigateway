@@ -23,6 +23,8 @@ import (
 	"github.com/xgfone/go-apigateway/http/router"
 )
 
+var stdResponser core.Responser = core.ResponserFunc(core.StdResponse)
+
 // BuildHttpRouteResponser is used to build a responser of the http route.
 //
 // If not set or return nil, use core.StdResponse instead.
@@ -82,14 +84,14 @@ func (r HttpRoute) Build() (router.Route, error) {
 	extra := r.Extra
 	r.Extra = nil
 
-	responser := core.StdResponse
+	responser := stdResponser
 	if BuildHttpRouteResponser != nil {
 		responser, err = BuildHttpRouteResponser(r)
 		if err != nil {
 			return router.Route{}, err
 		}
 		if responser == nil {
-			responser = core.StdResponse
+			responser = stdResponser
 		}
 	}
 

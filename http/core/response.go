@@ -52,7 +52,17 @@ type ResponseWriter interface {
 }
 
 // Responser is used to handle the response from the upstream server to the client.
-type Responser func(*Context, *http.Response, error)
+type Responser interface {
+	Respond(*Context, *http.Response, error)
+}
+
+// ResponserFunc is a Responder function.
+type ResponserFunc func(*Context, *http.Response, error)
+
+// Respond implements the interface Responder.
+func (f ResponserFunc) Respond(c *Context, resp *http.Response, err error) {
+	f(c, resp, err)
+}
 
 // StdResponse is a standard response handler.
 func StdResponse(c *Context, resp *http.Response, err error) {

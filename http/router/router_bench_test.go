@@ -32,7 +32,7 @@ func BenchmarkRouter(b *testing.B) {
 		UpstreamId: "up",
 		Matcher:    AlwaysTrue,
 		Handler:    func(*core.Context) {},
-		Responser:  func(*core.Context, *http.Response, error) {},
+		Responser:  core.ResponserFunc(func(*core.Context, *http.Response, error) {}),
 	})
 
 	rec := httptest.NewRecorder()
