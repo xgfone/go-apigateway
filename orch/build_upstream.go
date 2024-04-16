@@ -103,5 +103,6 @@ func (up Upstream) Build() (*upstream.Upstream, error) {
 	_up := upstream.New(forwarder)
 	_up.SetScheme(up.Scheme)
 	_up.SetHost(up.Host)
+	_up.SetPath(up.Path)
 	return _up, nil
 }

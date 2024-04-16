@@ -62,6 +62,11 @@ func Forward(c *core.Context) {
 		c.UpstreamRequest.Host = host
 	}
 
+	// Reset the url path
+	if path := up.Path(); path != "" {
+		c.UpstreamRequest.URL.Path = path
+	}
+
 	c.CallbackOnForward()
 	if c.IsAborted {
 		return

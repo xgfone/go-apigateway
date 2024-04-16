@@ -30,6 +30,7 @@ type Upstream struct {
 
 	scheme atomicvalue.Value[string]
 	host   atomicvalue.Value[string]
+	path   atomicvalue.Value[string]
 }
 
 // New returns a new upstream based on the forwarder.
@@ -37,11 +38,17 @@ func New(forwarder *forwarder.Forwarder) *Upstream {
 	return &Upstream{Forwarder: forwarder}
 }
 
+// Path returns the path of the upstream.
+func (u *Upstream) Path() string { return u.path.Load() }
+
 // Host returns the host of the upstream.
 func (u *Upstream) Host() string { return u.host.Load() }
 
 // Scheme returns the scheme of the upstream.
 func (u *Upstream) Scheme() string { return u.scheme.Load() }
+
+// SetPath sets the path of the upstream.
+func (u *Upstream) SetPath(path string) { u.path.Store(path) }
 
 // SetHost sets the host of the upstream.
 func (u *Upstream) SetHost(host string) { u.host.Store(host) }

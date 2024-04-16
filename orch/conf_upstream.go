@@ -36,6 +36,7 @@ type Upstream struct {
 	// Optional
 	Scheme string `json:"scheme,omitempty" yaml:"scheme,omitempty"` // "http(default)", "https", "tcp", "tls"
 	Host   string `json:"host,omitempty" yaml:"host,omitempty"`     // "$client"(default), "$server", "xxx"
+	Path   string `json:"path,omitempty" yaml:"path,omitempty"`
 }
 
 // ForwardPolicy returns the normalized forwarding policy.
