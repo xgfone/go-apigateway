@@ -255,7 +255,7 @@ func serveRoute(c *core.Context, handler core.Handler, timeout time.Duration) {
 
 func wrappanic(c *core.Context) {
 	if r := recover(); r != nil {
-		defaults.HandlePanicContext(c.Context, r)
+		defaults.HandlePanic(c.Context, r)
 		if e, ok := r.(error); ok {
 			c.Abort(fmt.Errorf("panic: %w", e))
 		} else {

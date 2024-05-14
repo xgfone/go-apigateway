@@ -33,6 +33,6 @@ func DisableSLog() {
 // WrapPanic is used to wrap and log the panic.
 func WrapPanic(ctx context.Context) {
 	if r := recover(); r != nil {
-		defaults.HandlePanicContext(ctx, r)
+		defaults.HandlePanic(ctx, r)
 	}
 }

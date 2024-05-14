@@ -43,6 +43,6 @@ func _run[T any](configs []T, f callback[T]) {
 
 func _wrappanic() {
 	if r := recover(); r != nil {
-		defaults.HandlePanicContext(context.Background(), r)
+		defaults.HandlePanic(context.Background(), r)
 	}
 }
