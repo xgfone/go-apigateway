@@ -17,17 +17,27 @@ package directive
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/xgfone/go-apigateway/http/core"
 )
 
-// GetHeaderValue is used to get the value of the header by the key.
-var GetHeaderValue = getHeaderValue
+var (
+	// GetHeaderValue is used to get the value of the header by the key.
+	GetHeaderValue = getHeaderValue
+
+	// GetCookieName is used by GetHeaderValue to get the cookie name.
+	GetCookieName = getCookieName
+)
+
+func getCookieName(r *http.Request) string {
+	return r.Header.Get("X-Cookie")
+}
 
 func getHeaderValue(c *core.Context, key string) string {
 	switch key {
 	case "cookie", "Cookie":
-		if cname := c.ClientRequest.Header.Get("X-Cookie"); cname != "" {
+		if cname := GetCookieName(c.ClientRequest); cname != "" {
 			key = cname
 		}
 		return c.Cookie(key)
