@@ -65,7 +65,7 @@ func (p proxy) Serve(ctx context.Context, req any) (any, error) {
 		r.Host = p.addr
 	}
 
-	resp, err := upstream.DefaultHttpClient.Do(r)
+	resp, err := upstream.Send(c, r)
 	if err != nil && resp != nil {
 		resp.Body.Close() // For status code 3xx
 	}

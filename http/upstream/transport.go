@@ -33,6 +33,28 @@ const (
 // to forward the request to the upstream server.
 var DefaultHttpClient = newClient()
 
+// DisableRedirectHttpClient is the same as DefaultHttpClient,
+// which disables redirecting and returns the 3xx response.
+var DisableRedirectHttpClient = newDisableRedirectClient()
+
+// Send sends the http request with context and returns the http response.
+func Send(c *core.Context, r *http.Request) (*http.Response, error) {
+	if c.Client != nil {
+		return c.Client.Do(r)
+	}
+	return DefaultHttpClient.Do(r)
+}
+
+func disableRedirect(*http.Request, []*http.Request) error {
+	return http.ErrUseLastResponse
+}
+
+func newDisableRedirectClient() *http.Client {
+	client := *DefaultHttpClient
+	client.CheckRedirect = disableRedirect
+	return &client
+}
+
 func newClient() *http.Client {
 	return &http.Client{Transport: newTransport()}
 }

@@ -55,6 +55,7 @@ type Context struct {
 	UpstreamId string // Set by the router after matching the route.
 
 	// For Client
+	Client         *http.Client
 	ClientRequest  *http.Request  // Set by the router when serving the request.
 	ClientResponse ResponseWriter // Set by the router when serving the request.
 	Responser      Responser      // Set by the router after matching the route.
