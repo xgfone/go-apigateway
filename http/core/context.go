@@ -29,6 +29,8 @@ import (
 	"github.com/xgfone/go-loadbalancer"
 )
 
+var DefaultCapSize = 4
+
 var ctxpool = &sync.Pool{New: func() any { return NewContext() }}
 
 // AcquireContext acquires a context from the pool.
@@ -80,9 +82,9 @@ type Context struct {
 
 func NewContext() *Context {
 	return &Context{
-		Kvs:         make(map[string]any, 4),
-		forwards:    make([]func(), 0, 4),
-		respheaders: make([]func(), 0, 4),
+		Kvs:         make(map[string]any, DefaultCapSize),
+		forwards:    make([]func(), 0, DefaultCapSize),
+		respheaders: make([]func(), 0, DefaultCapSize),
 	}
 }
 
