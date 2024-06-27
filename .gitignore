@@ -46,10 +46,3 @@ debug_test
 # hidden files
 .*
 _*
-
-# test
-test/
-testdata/
-
-# bin
-apigateway
