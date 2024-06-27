@@ -39,8 +39,7 @@ type HttpRoute struct {
 	MiddlewareGroups []string    `json:"middlewareGroups,omitempty" yaml:"middlewareGroups,omitempty"`
 
 	// Addon information.
-	Handler any `json:"handler,omitempty" yaml:"handler,omitempty"`
-	Extra   any `json:"extra,omitempty" yaml:"extra,omitempty"`
+	Extra any `json:"extra,omitempty" yaml:"extra,omitempty"`
 }
 
 // HttpRouteMatcher is the configuraiton of a route matcher.
