@@ -33,6 +33,10 @@ const (
 // to forward the request to the upstream server.
 var DefaultHttpClient = newClient()
 
+// EnableRedirectHttpClient is the same as DefaultHttpClient,
+// which enables redirecting and returns the 3xx response.
+var EnableRedirectHttpClient = newClient()
+
 // DisableRedirectHttpClient is the same as DefaultHttpClient,
 // which disables redirecting and returns the 3xx response.
 var DisableRedirectHttpClient = newDisableRedirectClient()
