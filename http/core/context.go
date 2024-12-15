@@ -25,8 +25,9 @@ import (
 
 	"github.com/xgfone/go-apigateway/nets"
 	"github.com/xgfone/go-defaults"
-	"github.com/xgfone/go-defaults/assists"
 	"github.com/xgfone/go-loadbalancer"
+	"github.com/xgfone/go-toolkit/netx"
+	"github.com/xgfone/go-toolkit/netx/netipx"
 )
 
 var DefaultCapSize = 4
@@ -173,10 +174,12 @@ func (c *Context) Queries() url.Values {
 
 func (c *Context) ClientIP() netip.Addr {
 	if conn := nets.GetConnFromContext(c.ClientRequest.Context()); conn != nil {
-		return assists.ConvertAddr(conn.RemoteAddr())
+		addr, _ := netipx.AddrFromNetAddr(conn.RemoteAddr())
+		return addr
 	}
 
-	addr, _ := netip.ParseAddr(assists.TrimPort(c.ClientRequest.RemoteAddr))
+	host, _ := netx.SplitHostPort(c.ClientRequest.RemoteAddr)
+	addr, _ := netip.ParseAddr(host)
 	return addr
 }
 
