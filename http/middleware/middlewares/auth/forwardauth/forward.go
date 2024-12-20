@@ -194,7 +194,7 @@ func (a *forwardauth) Handle(c *core.Context) {
 
 		newc := core.AcquireContext(c.Context)
 		newc.ClientRequest = req
-		var _resp interface{}
+		var _resp any
 		_resp, err = up.Serve(c.Context, newc)
 		if _resp != nil {
 			resp = _resp.(*http.Response)

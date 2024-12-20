@@ -35,7 +35,7 @@ func init() {
 		case []string:
 			cidrs = vs
 
-		case []interface{}:
+		case []any:
 			var ok bool
 			cidrs = make([]string, len(vs))
 			for i, v := range vs {

@@ -74,7 +74,7 @@ func Forward(c *core.Context) {
 
 	start := time.Now()
 
-	var resp interface{}
+	var resp any
 	resp, c.Error = up.Serve(c.UpstreamRequest.Context(), c)
 	if resp != nil {
 		c.UpstreamResponse = resp.(*http.Response)

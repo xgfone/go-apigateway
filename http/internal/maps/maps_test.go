@@ -21,7 +21,7 @@ import (
 
 func TestKeys(t *testing.T) {
 	teststrings(t, Keys(map[string]string{"a": "1", "b": "2", "c": "3"}), "a", "b", "c")
-	teststrings(t, Keys(map[string]interface{}{"1": "a", "2": "b", "3": "b"}), "1", "2", "3")
+	teststrings(t, Keys(map[string]any{"1": "a", "2": "b", "3": "b"}), "1", "2", "3")
 }
 
 func teststrings(t *testing.T, results []string, expects ...string) {

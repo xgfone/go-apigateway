@@ -28,7 +28,7 @@ func TestRegistry(t *testing.T) {
 		return errors.New(conf.(string)), nil
 	})
 	r.Register("fmt", func(name string, conf any) (error, error) {
-		args := conf.([]interface{})
+		args := conf.([]any)
 		return fmt.Errorf(args[0].(string), args[1:]...), nil
 	})
 
@@ -58,7 +58,7 @@ func TestRegistry(t *testing.T) {
 		t.Errorf("expect '%s', but got '%s'", "test", s)
 	}
 
-	if e, err := r.Build("fmt", []interface{}{"fmt: %s", "test"}); err != nil {
+	if e, err := r.Build("fmt", []any{"fmt: %s", "test"}); err != nil {
 		t.Error(err)
 	} else if s := e.Error(); s != "fmt: test" {
 		t.Errorf("expect '%s', but got '%s'", "fmt: test", s)

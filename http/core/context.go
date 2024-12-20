@@ -62,7 +62,7 @@ type Context struct {
 	Responser      Responser      // Set by the router after matching the route.
 
 	// For Upstream
-	Upstream         interface{}
+	Upstream         any
 	UpstreamRequest  *http.Request
 	UpstreamResponse *http.Response // Set by the upstream after forwarding the request.
 	ForwardTimeout   time.Duration
@@ -70,7 +70,7 @@ type Context struct {
 
 	IsAborted bool
 	Error     error          // Set when aborting the context process anytime.
-	Data      interface{}    // The contex data that is set and used by the final user.
+	Data      any            // The contex data that is set and used by the final user.
 	Kvs       map[string]any // The interim context key-value cache.
 
 	// Cache to avoid to parse them twice.

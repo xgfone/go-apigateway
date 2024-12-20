@@ -79,7 +79,7 @@ func (e Error) WithError(err error) Error {
 
 // WithMessage is a convenient method that convert the format message
 // to an error and set it, then return the new error.
-func (e Error) WithMessage(msg string, args ...interface{}) Error {
+func (e Error) WithMessage(msg string, args ...any) Error {
 	if len(args) == 0 {
 		e.Message = msg
 	} else {
