@@ -16,11 +16,8 @@
 package slogx
 
 import (
-	"context"
 	"io"
 	"log/slog"
-
-	"github.com/xgfone/go-defaults"
 )
 
 // DisableSLog sets the log level to ERROR and output to io.Discard.
@@ -28,11 +25,4 @@ func DisableSLog() {
 	level := new(slog.LevelVar)
 	level.Set(slog.LevelError + 10)
 	slog.SetDefault(slog.New(slog.NewJSONHandler(io.Discard, &slog.HandlerOptions{Level: level})))
-}
-
-// WrapPanic is used to wrap and log the panic.
-func WrapPanic(ctx context.Context) {
-	if r := recover(); r != nil {
-		defaults.HandlePanic(ctx, r)
-	}
 }

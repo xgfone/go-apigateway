@@ -24,7 +24,6 @@ import (
 	"time"
 
 	"github.com/xgfone/go-apigateway/nets"
-	"github.com/xgfone/go-defaults"
 	"github.com/xgfone/go-loadbalancer"
 	"github.com/xgfone/go-toolkit/netx"
 	"github.com/xgfone/go-toolkit/netx/netipx"
@@ -187,4 +186,4 @@ func (c *Context) ClientIP() netip.Addr {
 func (c *Context) RemoteAddr() string { return c.ClientRequest.RemoteAddr }
 
 // RequestID returns the request id of the request.
-func (c *Context) RequestID() string { return c.ClientRequest.Header.Get(defaults.HeaderXRequestID) }
+func (c *Context) RequestID() string { return c.ClientRequest.Header.Get("X-Request-Id") }

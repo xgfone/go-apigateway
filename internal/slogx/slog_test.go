@@ -14,22 +14,8 @@
 
 package slogx
 
-import (
-	"context"
-	"testing"
-)
+import "testing"
 
 func TestDisableSLog(t *testing.T) {
 	DisableSLog()
-}
-
-func TestWrapPanic(t *testing.T) {
-	func() {
-		defer WrapPanic(context.Background())
-	}()
-
-	func() {
-		defer WrapPanic(context.Background())
-		panic("test")
-	}()
 }

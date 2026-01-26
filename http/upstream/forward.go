@@ -22,7 +22,6 @@ import (
 
 	"github.com/xgfone/go-apigateway/http/core"
 	"github.com/xgfone/go-apigateway/upstream"
-	"github.com/xgfone/go-defaults"
 )
 
 // Forward forwards the http request by the upstream.
@@ -87,7 +86,7 @@ func _log(c *core.Context, policy string, cost time.Duration, err error) {
 	req := c.UpstreamRequest
 	if err != nil {
 		slog.Error("fail to forward the http request",
-			slog.String("reqid", defaults.GetRequestID(c.Context, req)),
+			slog.String("reqid", c.RequestID()),
 			slog.String("upstream", c.UpstreamId),
 			slog.String("balancer", policy),
 			slog.String("method", req.Method),
@@ -101,7 +100,7 @@ func _log(c *core.Context, policy string, cost time.Duration, err error) {
 		)
 	} else if slog.Default().Enabled(c.Context, slog.LevelDebug) {
 		slog.Debug("forward the http request",
-			slog.String("reqid", defaults.GetRequestID(c.Context, req)),
+			slog.String("reqid", c.RequestID()),
 			slog.String("upstream", c.UpstreamId),
 			slog.String("balancer", policy),
 			slog.String("method", req.Method),

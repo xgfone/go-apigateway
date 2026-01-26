@@ -19,7 +19,7 @@ package updater
 import (
 	"context"
 
-	"github.com/xgfone/go-defaults"
+	"github.com/xgfone/go-toolkit/runtimex"
 )
 
 type callback[T any] func([]T)
@@ -37,12 +37,6 @@ func _sync[T any](ctx context.Context, ch <-chan []T, f callback[T]) {
 }
 
 func _run[T any](configs []T, f callback[T]) {
-	defer _wrappanic()
+	defer runtimex.Recover(context.Background())
 	f(configs)
-}
-
-func _wrappanic() {
-	if r := recover(); r != nil {
-		defaults.HandlePanic(context.Background(), r)
-	}
 }

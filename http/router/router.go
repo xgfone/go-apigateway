@@ -29,7 +29,7 @@ import (
 	"github.com/xgfone/go-apigateway/http/core"
 	"github.com/xgfone/go-apigateway/http/middleware"
 	"github.com/xgfone/go-apigateway/http/statuscode"
-	"github.com/xgfone/go-defaults"
+	"github.com/xgfone/go-toolkit/runtimex"
 )
 
 // DefaultRouter is the default global http router.
@@ -255,7 +255,7 @@ func serveRoute(c *core.Context, handler core.Handler, timeout time.Duration) {
 
 func wrappanic(c *core.Context) {
 	if r := recover(); r != nil {
-		defaults.HandlePanic(c.Context, r)
+		slog.Error("wrap a panic", "panic", r, "stacks", runtimex.Stacks(2))
 		if e, ok := r.(error); ok {
 			c.Abort(fmt.Errorf("panic: %w", e))
 		} else {
