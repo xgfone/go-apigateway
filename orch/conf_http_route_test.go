@@ -18,7 +18,6 @@ import (
 	"reflect"
 	"slices"
 	"testing"
-	"time"
 )
 
 var (
@@ -27,7 +26,7 @@ var (
 		Upstream: "upstream",
 
 		Priority:         123,
-		RequestTimeout:   time.Second,
+		RequestTimeout:   1000,
 		MiddlewareGroups: []string{"group"},
 		Middlewares: Middlewares{
 			{Name: "allow", Conf: "127.0.0.1/8"},
@@ -53,7 +52,7 @@ var (
 		Upstream: "upstream",
 
 		Priority:         123,
-		RequestTimeout:   time.Second,
+		RequestTimeout:   1000,
 		MiddlewareGroups: []string{"group"},
 		Middlewares: Middlewares{
 			{Name: "allow", Conf: "127.0.0.1/8"},

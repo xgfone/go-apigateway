@@ -15,6 +15,8 @@
 // Package orch provides some orchestration functions.
 package orch
 
+import "time"
+
 // GetConfig tries to assert the input argument v to the interface { Config() any },
 // calls it and returns the result if successfully; or, returns nil.
 func GetConfig(v any) any {
@@ -22,4 +24,8 @@ func GetConfig(v any) any {
 		return c.Config()
 	}
 	return nil
+}
+
+func ms(duration int) time.Duration {
+	return time.Duration(duration) * time.Millisecond
 }

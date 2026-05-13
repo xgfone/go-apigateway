@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"reflect"
 	"slices"
-	"time"
 )
 
 // HttpRoute is a http route configuration.
@@ -32,8 +31,9 @@ type HttpRoute struct {
 	Protect  bool `json:"protect,omitempty" yaml:"protect,omitempty"`
 	Priority int  `json:"priority,omitempty" yaml:"priority,omitempty"`
 
-	RequestTimeout time.Duration `json:"requestTimeout,omitempty" yaml:"requestTimeout,omitempty"`
-	ForwardTimeout time.Duration `json:"forwardTimeout,omitempty" yaml:"forwardTimeout,omitempty"`
+	// Unit: ms
+	RequestTimeout int `json:"requestTimeout,omitempty" yaml:"requestTimeout,omitempty"`
+	ForwardTimeout int `json:"forwardTimeout,omitempty" yaml:"forwardTimeout,omitempty"`
 
 	Middlewares      Middlewares `json:"middlewares,omitempty" yaml:"middlewares,omitempty"`
 	MiddlewareGroups []string    `json:"middlewareGroups,omitempty" yaml:"middlewareGroups,omitempty"`

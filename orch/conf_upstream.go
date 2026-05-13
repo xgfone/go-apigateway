@@ -17,7 +17,6 @@ package orch
 import (
 	"reflect"
 	"slices"
-	"time"
 )
 
 // Upstream is an upstream configuraiton.
@@ -26,8 +25,8 @@ type Upstream struct {
 	Id        string    `json:"id" yaml:"id"`
 	Discovery Discovery `json:"discovery" yaml:"discovery"`
 
-	// Optional, Default: 0
-	Timeout time.Duration `json:"timeout,omitempty" yaml:"timeout,omitempty"`
+	// Optional, Unit: ms, Default: 0
+	Timeout int `json:"timeout,omitempty" yaml:"timeout,omitempty"`
 
 	// Optional
 	Policy string `json:"policy,omitempty" yaml:"policy,omitempty"` // Default: roundrobin

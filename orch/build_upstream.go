@@ -17,7 +17,6 @@ package orch
 import (
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/xgfone/go-apigateway/http/endpoint"
 	"github.com/xgfone/go-apigateway/upstream"
@@ -93,8 +92,7 @@ func (up Upstream) Build() (*upstream.Upstream, error) {
 
 	var _balancer balancer.Balancer
 	if up.Retry.Number >= 0 {
-		interval := time.Duration(up.Retry.Interval) * time.Millisecond
-		_balancer = balancer.NewRetry(selector, interval, up.Retry.Number)
+		_balancer = balancer.NewRetry(selector, ms(up.Retry.Interval), up.Retry.Number)
 	} else {
 		_balancer = balancer.NewFromSelector(selector)
 	}
@@ -102,7 +100,7 @@ func (up Upstream) Build() (*upstream.Upstream, error) {
 	forwarder := forwarder.New(up.Id, _balancer, discovery)
 	forwarder.SetConfig(up)
 	if up.Timeout > 0 {
-		forwarder.SetTimeout(up.Timeout)
+		forwarder.SetTimeout(ms(up.Timeout))
 	}
 
 	_up := upstream.New(forwarder)

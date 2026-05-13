@@ -104,8 +104,8 @@ func (r HttpRoute) Build() (router.Route, error) {
 		Config:     r,
 		Extra:      extra,
 
-		RequestTimeout: r.RequestTimeout,
-		ForwardTimeout: r.ForwardTimeout,
+		RequestTimeout: ms(r.RequestTimeout),
+		ForwardTimeout: ms(r.ForwardTimeout),
 
 		Desc:      matcher.String(),
 		Matcher:   matcher,
