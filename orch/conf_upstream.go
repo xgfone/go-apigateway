@@ -67,8 +67,8 @@ func (u Upstream) ForwardPolicy() string {
 
 // Retry is a retry configuration.
 type Retry struct {
-	Number   int           `json:"number,omitempty" yaml:"number,omitempty"`     // <0: disabled
-	Interval time.Duration `json:"interval,omitempty" yaml:"interval,omitempty"` // [0, +∞), Unit: ms
+	Number   int `json:"number,omitempty" yaml:"number,omitempty"`     // <0: disabled
+	Interval int `json:"interval,omitempty" yaml:"interval,omitempty"` // [0, +∞), Unit: ms
 }
 
 // Discovery is the configuration of the upstream server discovery.

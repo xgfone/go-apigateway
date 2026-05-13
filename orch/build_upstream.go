@@ -23,8 +23,8 @@ import (
 	"github.com/xgfone/go-apigateway/upstream"
 	"github.com/xgfone/go-loadbalancer"
 	"github.com/xgfone/go-loadbalancer/balancer"
-	"github.com/xgfone/go-loadbalancer/balancer/retry"
 	"github.com/xgfone/go-loadbalancer/forwarder"
+	"github.com/xgfone/go-loadbalancer/selector"
 )
 
 var (
@@ -86,15 +86,20 @@ func (up Upstream) Build() (*upstream.Upstream, error) {
 	}
 
 	policy := up.ForwardPolicy()
-	balancer := balancer.Get(policy)
-	if balancer == nil {
+	selector := selector.Get(policy)
+	if selector == nil {
 		return nil, fmt.Errorf("Upstream<%s>: invalid forwarding policy '%s'", up.Id, policy)
 	}
+
+	var _balancer balancer.Balancer
 	if up.Retry.Number >= 0 {
-		balancer = retry.New(balancer, up.Retry.Interval*time.Millisecond, up.Retry.Number)
+		interval := time.Duration(up.Retry.Interval) * time.Millisecond
+		_balancer = balancer.NewRetry(selector, interval, up.Retry.Number)
+	} else {
+		_balancer = balancer.NewFromSelector(selector)
 	}
 
-	forwarder := forwarder.New(up.Id, balancer, discovery)
+	forwarder := forwarder.New(up.Id, _balancer, discovery)
 	forwarder.SetConfig(up)
 	if up.Timeout > 0 {
 		forwarder.SetTimeout(up.Timeout)
