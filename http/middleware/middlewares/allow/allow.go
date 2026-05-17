@@ -22,7 +22,6 @@ import (
 	"github.com/xgfone/go-apigateway/http/middleware"
 	"github.com/xgfone/go-apigateway/http/statuscode"
 	"github.com/xgfone/go-apigateway/nets"
-	"github.com/xgfone/go-binder"
 )
 
 func init() {
@@ -46,13 +45,12 @@ func init() {
 			}
 
 		case map[string]any:
-			var arg struct {
-				Cidrs []string `json:"cidrs"`
+			if v, ok := vs["cidrs"]; ok {
+				cidrs, ok = v.([]string)
+				if !ok {
+					return nil, fmt.Errorf("Middleware<%s>: expect a string slice, but got %T", name, v)
+				}
 			}
-			if err := binder.BindStructToMap(&arg, "json", vs); err != nil {
-				return nil, fmt.Errorf("Middleware<%s>: %w", name, err)
-			}
-			cidrs = arg.Cidrs
 
 		default:
 			return nil, fmt.Errorf("Middleware<%s>: unsupported config type %T", name, conf)
