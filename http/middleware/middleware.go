@@ -21,7 +21,7 @@ import (
 
 	"github.com/xgfone/go-apigateway/http/core"
 	"github.com/xgfone/go-apigateway/registry"
-	"github.com/xgfone/go-binder"
+	"github.com/xgfone/go-toolkit/structx"
 )
 
 // DefaultRegistry is the global default registry of the middleware builder.
@@ -87,7 +87,7 @@ func (ms Middlewares) Handler(handler core.Handler) core.Handler {
 func BindConf(name string, dstconf, srcconf any) (err error) {
 	switch v := srcconf.(type) {
 	case map[string]any:
-		err = binder.BindStructToMap(dstconf, "json", v)
+		err = structx.BindMapAny(dstconf, v, "json")
 
 	case []byte:
 		err = json.Unmarshal(v, dstconf)
