@@ -20,7 +20,6 @@ import (
 	_ "github.com/xgfone/go-apigateway/http/middleware/middlewares/auth"
 	_ "github.com/xgfone/go-apigateway/http/middleware/middlewares/auth/forwardauth"
 	_ "github.com/xgfone/go-apigateway/http/middleware/middlewares/block"
-	_ "github.com/xgfone/go-apigateway/http/middleware/middlewares/cors"
 	_ "github.com/xgfone/go-apigateway/http/middleware/middlewares/processor"
 	_ "github.com/xgfone/go-apigateway/http/middleware/middlewares/redirect"
 )
