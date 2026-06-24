@@ -4,5 +4,5 @@ github.com/xgfone/go-http-matcher v0.2.0 h1:PJ0MKKfwJyX0WzrgVL6n3OrErZcNIIX2a9A1
 github.com/xgfone/go-http-matcher v0.2.0/go.mod h1:fyihMHUrUF1Oq+FVktlF0k+CQo0FtitsmE7aGtpuyCM=
 github.com/xgfone/go-loadbalancer v0.10.0 h1:riMWK6SR329Q/68NsTizv75t5H38b857GgPnPDW4GZk=
 github.com/xgfone/go-loadbalancer v0.10.0/go.mod h1:MWND7Doeni7o8G1+//UgxFLXJ/SwsGBK4D8bJpuVgSg=
-github.com/xgfone/go-toolkit v0.27.0 h1:D9cqFUZQvuNG1Tx13zqscn9+mZqwt/cjg3ylpOP608c=
-github.com/xgfone/go-toolkit v0.27.0/go.mod h1:5okC8n/b3Qy4ryG071PLr6ixX/RZ7kP+2IFhsFFrh6Q=
+github.com/xgfone/go-toolkit v0.28.0 h1:6GasXVv0L538y0FhNNevWQ+ZszgvTni0lMhhI0o1/tU=
+github.com/xgfone/go-toolkit v0.28.0/go.mod h1:VlFzuj2OJP3NGLCk+civtWEZ4hrDBlep6k5G89YIZfc=
